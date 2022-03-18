@@ -6948,19 +6948,19 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (is_array($sl_layout_value)) $sl_layout_value = reset($sl_layout_value);
         $sl_layout_value = trim(strtolower($sl_layout_value));
-        
+       
         if (empty($this->layout_options)){
 
             $layout_options = $this->layoutSource->getAllOptions();
-
+            
             $indexes = array('label', 'value');
 
             foreach ($layout_options as $keyLO => $layout_option) {
-                
+
                 $new_layout_option = array();
 
                 foreach ($indexes as $index) {
-                    
+
                     if (is_object($layout_option[$index])){
 
                         $new_layout_option[$index] = trim(strtolower(json_decode(json_encode($layout_option[$index]), true)));
@@ -6984,12 +6984,24 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             $word_layout_value = false;
 
             if (preg_match('~(no|layout|updates)~', $sl_layout_value)){
-            
+           
                 $word_layout_value = '';
-            
+           
             }else if (preg_match('~(empty)~', $sl_layout_value)){
-                
+               
                 $word_layout_value = 'empty';
+           
+            }else if (preg_match('~(cms|page)~', $sl_layout_value)){
+                                      
+                $word_layout_value = 'cms-full-width';
+
+            }else if (preg_match('~(category)~', $sl_layout_value)){
+                           
+                $word_layout_value = 'category-full-width';
+
+            }else if (preg_match('~(product)~', $sl_layout_value)){
+                           
+                $word_layout_value = 'product-full-width';
 
             }else{
 
@@ -7004,23 +7016,23 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     $word_layout_value = '1column';
 
                 }else if ($preg_2 && $preg_right){
-                    
+
                     $word_layout_value = '2columns-right';
 
                 }else if ($preg_2 || $preg_left){
-                    
+
                     $word_layout_value = '2columns-left';
 
                 }else if ($preg_3){
-                    
+
                     $word_layout_value = '3columns';
 
                 }
 
             }
-            
+
             foreach ($this->layout_options as $layout_option) {
-                
+
                 if ($sl_layout_value == $layout_option['value'] || $sl_layout_value == $layout_option['label']){
 
                     return $layout_option['value'];
@@ -7031,13 +7043,21 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($word_layout_value !== false){
 
-                return $word_layout_value;
+                foreach ($this->layout_options as $layout_option) {
+
+                    if ($word_layout_value == $layout_option['value']){
+
+                        return $word_layout_value;
+
+                    } 
+
+                }
 
             }
 
-        }
-        
-        return $this->category_page_layout;
+       }
+       
+       return $this->category_page_layout;
 
     }
 
