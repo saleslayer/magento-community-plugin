@@ -158,23 +158,6 @@ class Autosynccron extends Synccatalog{
                 
                 if ($interval >= 480){
 
-                    $flag_pid_is_alive = $this->has_pid_alive($current_flag['syncdata_pid']);
-                
-                    if ($flag_pid_is_alive){
-                    
-                        try{
-
-                            $this->debbug('Killing pid: '.$current_flag['syncdata_pid'], 'autosync');
-                            shell_exec("kill -9 ".$current_flag['syncdata_pid']);
-                    
-                        }catch(\Exception $e){
-                    
-                            $this->debbug('## Error. Exception killing pid '.$current_flag['syncdata_pid'].': '.print_r($e->getMessage(),1), 'autosync');
-                    
-                        }
-                
-                    }
-
                     $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
                                             " SET syncdata_pid = 0, syncdata_last_date = '".$date_now."'".
                                             " WHERE id = ".$current_flag['id'];

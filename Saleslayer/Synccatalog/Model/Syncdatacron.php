@@ -248,30 +248,6 @@ class Syncdatacron extends Synccatalog{
 
             }
 
-            $flag_pid_is_alive = $this->has_pid_alive($current_flag['syncdata_pid']);
-            
-            if ($flag_pid_is_alive){
-            
-                try{
-
-                    $this->debbug('Killing pid: '.$current_flag['syncdata_pid'].' with user: '.get_current_user(), 'syncdata');
-                    
-                    $result_kill = posix_kill($current_flag['syncdata_pid'], 0);
-
-                    if (!$result_kill){
-
-                        $this->debbug('## Error. Could not kill pid '.$current_flag['syncdata_pid'], 'syncdata');
-
-                    }
-
-                }catch(\Exception $e){
-            
-                    $this->debbug('## Error. Exception killing pid '.$current_flag['syncdata_pid'].': '.print_r($e->getMessage(),1), 'syncdata');
-            
-                }
-                                            
-            }
-
             $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
                                     " SET syncdata_pid = ".$this->syncdata_pid.", syncdata_last_date = '".$date_now."'".
                                     " WHERE id = ".$current_flag['id'];
@@ -293,10 +269,11 @@ class Syncdatacron extends Synccatalog{
 
             if (!empty($current_flag)){
     
-                $sl = " UPDATE ".$this->saleslayer_syncdata_flag_table.
-                                        " SET syncdata_pid = 0".
+                $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
+                                        " SET syncdata_pid = 0, syncdata_last_date = '".date('Y-m-d H:i:s', strtotime('now'))."'".
                                         " WHERE id = ".$current_flag['id'];
-                $this->sl_connection_query($sl);
+                
+                $this->sl_connection_query($sl_query_flag_to_update);
     
             }
         

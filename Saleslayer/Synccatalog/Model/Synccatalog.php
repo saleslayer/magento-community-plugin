@@ -2523,7 +2523,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $product_table = $this->getTable('catalog_product_entity');
         $time_ini_read_table_status_create_product = microtime(1);
-        $table_status = $this->connection->query('SHOW TABLE STATUS LIKE "' . $product_table . '"')->fetch();
+        $table_status = $this->connection->showTableStatus($product_table);
         if ($this->sl_DEBBUG > 2) $this->debbug('# time_read_table_status_create_product: ', 'timer', (microtime(1) - $time_ini_read_table_status_create_product));
            
         $entity_id = $table_status['Auto_increment'];
@@ -4111,7 +4111,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         
         if (!$position) $position = 1;
 
-        $table_status = $this->connection->query('SHOW TABLE STATUS LIKE "' . $galleryValueTable . '"')->fetch();
+        $table_status = $this->connection->showTableStatus($galleryValueTable);
         $record_id = $table_status['Auto_increment'];
 
         $gallery_value_table_data = [
@@ -4688,7 +4688,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     private function create_format_db($product_id, $format_id, $sl_sku = null) {
 
         $product_table = $this->getTable('catalog_product_entity');
-        $table_status = $this->connection->query('SHOW TABLE STATUS LIKE "' . $product_table . '"')->fetch();
+        $table_status = $this->connection->showTableStatus($product_table);
         $entity_id = $table_status['Auto_increment'];
 
         if (!in_array($this->format_type_creation, array($this->product_type_simple, $this->product_type_virtual))){
@@ -8121,47 +8121,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     }
 
     /**
-     * Function to search the pid and return if it's still running or not
-     * @param int $pid          pid to search
-     * @return boolean          status of pid running
-     */
-    public function has_pid_alive($pid){
-
-        if ($pid){
-
-            if (strtolower(substr(PHP_OS, 0, 3)) == 'win') {
-
-                $wmi = new \COM('winmgmts://');
-                $process = $wmi->ExecQuery("SELECT ProcessId FROM Win32_Process WHERE ProcessId='$pid'");
-
-                $process_count = count($process);
-
-                if ($this->sl_DEBBUG > 2){ $this->debbug("Searching active process pid '$pid' by Windows. Is active? ".($process_count > 0 ? 'Yes' : 'No')); }
-
-                return ($process_count > 0 ? true : false);
-
-            } else if (function_exists('posix_getpgid')) {
-
-                if ($this->sl_DEBBUG > 2) { $this->debbug("Searching active process pid '$pid' by posix_getpgid. Is active? ".(posix_getpgid($pid) ? 'Yes' : 'No')); }
-
-                return (posix_getpgid($pid) ? true : false);
-
-            } else {
-
-                if ($this->sl_DEBBUG > 2) { $this->debbug("Searching active process pid '$pid' by ps -p. Is active? ".(shell_exec("ps -p $pid | wc -l") > 1 ? 'Yes' : 'No')); }
-
-                if (shell_exec("ps -p $pid | wc -l") > 1) { 
-                    return true; 
-                }
-
-            }
-        }
-
-        return false;
-        
-    }
-
-    /**
      * Function to load Sales Layer attributes.
      * @return boolean              if attributes have been loaded or not
      */
@@ -8484,7 +8443,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     private function create_category_db($saleslayer_id) {
 
         $category_table = $this->getTable('catalog_category_entity');
-        $table_status = $this->connection->query('SHOW TABLE STATUS LIKE "' . $category_table . '"')->fetch();
+        $table_status = $this->connection->showTableStatus($category_table);
         $entity_id = $table_status['Auto_increment'];
 
         $values = [
@@ -12269,7 +12228,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         
         $time_ini_generate_link = microtime(1);
 
-        $table_status = $this->connection->query('SHOW TABLE STATUS LIKE "' . $product_link_table . '"')->fetch();
+        $table_status = $this->connection->showTableStatus($product_link_table);
             
         $link_id = $table_status['Auto_increment'];
 
@@ -12394,7 +12353,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         foreach ($linked_product_data as $link_data) {
 
-            $this->linkDataUpdate($link_data, $product_id, $parent_product_core_data, $existing_links_data, $link_attributes_data,$product_link_table, $product_table);
+            $existing_links_data = $this->linkDataUpdate($link_data, $product_id, $parent_product_core_data, $existing_links_data, $link_attributes_data,$product_link_table, $product_table);
+
         }
         
         if ($this->sl_DEBBUG > 2) $this->debbug('# time_link_all_data_update: ', 'timer', (microtime(1) - $time_ini_link_all_data_update));
@@ -12522,6 +12482,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if ($this->sl_DEBBUG > 2) $this->debbug('# time_link_data_update: ', 'timer', (microtime(1) - $time_ini_link_data_update));
         
+        return $existing_links_data;
+
     }
 
     /**
