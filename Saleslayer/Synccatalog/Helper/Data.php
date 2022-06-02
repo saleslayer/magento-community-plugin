@@ -96,7 +96,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributeOptionManagement = $attributeOptionManagement;
     }
 
-
     /**
      * Function to Updatate attribute option
      * @param array $option_stores array of values of stores view to update

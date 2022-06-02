@@ -1,7 +1,7 @@
 <?php
 namespace Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Edit\Tab;
 
-// use \Magento\Catalog\Model\Category as categoryModel;
+use Saleslayer\Synccatalog\Helper\slJson as slJson;
 
 /**
  * Synccatalog page edit form Parameters tab
@@ -12,12 +12,14 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
      * @var \Magento\Store\Model\System\Store
      */
     protected $_systemStore;
+    protected $slJson;
 
     /**
      * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Data\FormFactory $formFactory
      * @param \Magento\Store\Model\System\Store $systemStore
+     * @param Saleslayer\Synccatalog\Helper\slJson $slJson
      * @param array $data
      */
     public function __construct(
@@ -25,10 +27,12 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
         \Magento\Framework\Registry $registry,
         \Magento\Framework\Data\FormFactory $formFactory,
         \Magento\Store\Model\System\Store $systemStore,
+        slJson $slJson,
         array $data = []
     ) {
         parent::__construct($context, $registry, $formFactory, $data);
         $this->_systemStore = $systemStore;
+        $this->slJson = $slJson;
     }
 
     /**
@@ -57,7 +61,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
         if (empty($modelData)){
             $modelData['store_view_ids'] = array('0') ;
         }else{
-            $modelData['store_view_ids'] = json_decode($modelData['store_view_ids'],1);
+            $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
         }
 
         $auto_sync_options = array();

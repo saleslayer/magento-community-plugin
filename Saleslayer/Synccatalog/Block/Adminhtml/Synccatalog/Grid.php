@@ -60,66 +60,6 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         $collection = $this->_collectionFactory->create();
         /* @var $collection \Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog\Collection */
 
-        // $file = BP.'/var/log/sl_logs/_debbug_log_saleslayer_test.txt';
-
-        // // $stores_data = $this->_systemStore->getStoreValuesForForm(false, true);
-
-        // // $store_data = $this->_systemStore->getStoreName(2);
-        // // file_put_contents($file, 'store_data: '.print_r($store_data,1)."\n", FILE_APPEND);
-
-        
-        // // $storeCollection = $this->_scopeInterface->_loadStoreCollection();
-        // // file_put_contents($file, 'storeCollection: '.print_r($storeCollection,1)."\n", FILE_APPEND);
-        // // $collectionData = $collection->getData();
-        // // // file_put_contents($file, 'test: '.print_R($collectionData,1)."\n", FILE_APPEND);
-
-        // foreach ($collection as $keyConn => $connector) {
-        //     // file_put_contents($file, 'key: '.$keyConn."\n", FILE_APPEND);
-        //     // file_put_contents($file, 'connector: '.print_r($connector->getData(),1)."\n", FILE_APPEND);
-        //     $connectorData = $connector->getData();
-        //     $store_view_ids = json_decode($connectorData['store_view_ids'],1);
-        //     file_put_contents($file, 'store_view_ids: '.print_r($store_view_ids,1)."\n", FILE_APPEND);
-        //     $store_names = array();
-        //     foreach ($store_view_ids as $store_view_id) {
-        // // file_put_contents($file, 'store_view_id: '.print_r($store_view_id,1)."\n", FILE_APPEND);
-        //         if ($store_view_id == 0){
-        //             $store_name = 'All Store Views';
-        //         }else{
-        //             $store_name = $this->_systemStore->getStoreName($store_view_id);
-        //         }
-        //         array_push($store_names, $store_name);
-        //     }
-        //     // if (count($store_names) > 1){
-        //         $store_names = implode(',', $store_names);
-        //         $connectorData['store_view_id'] = $store_names;
-        //     // }else{
-        //     //     $store_names = $store_names[0];
-        //     // }
-        //     // file_put_contents($file, 'store_names: '.$store_names."\n", FILE_APPEND);
-        //     // // $collection[$keyConn['store_view_ids']] = $store_names;
-        //     // $collection->setStoreViewIds('');
-        //     // $collectionData[$keyConn]['store_view_ids'] = $store_names;
-        //     // $name_test = $this->_scopeConfig->getStore()->getName();
-        //     // file_put_contents($file, 'name_test: '.print_r($name_test,1)."\n", FILE_APPEND);
-        //     // file_put_contents($file, 'col id: '.print_r($col->getId(),1)."\n", FILE_APPEND);
-        //     // file_put_contents($file, 'col index: '.print_r($col->getIndex(),1)."\n", FILE_APPEND);
-        //     // file_put_contents($file, 'store_names: '.print_r($store_names,1)."\n", FILE_APPEND);
-        //     $connector->setStoreViewIds($store_names);
-        //     file_put_contents($file, 'connector data before add: '.print_r($connector->getData(),1)."\n", FILE_APPEND);
-        //     // $connector->setData($connectorData);
-        //     // $collection->updateObject($connector);
-        //     $collection->removeItemByKey($keyConn);
-        //     $collection->addItem($connector);
-        //     // $collection->save();
-        // }
-
-        // foreach ($collection as $keyConn => $connector) {
-        
-
-        // }
-        
-        // file_put_contents($file, 'test data: '.print_r($collection->getData(),1)."\n", FILE_APPEND);
-
         $this->setCollection($collection);
 
         return parent::_prepareCollection();

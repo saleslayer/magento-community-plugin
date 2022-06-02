@@ -14,6 +14,8 @@ use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
 use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
+use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
+use Saleslayer\Synccatalog\Helper\slJson as slJson;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
 use \Magento\Framework\Filesystem\DirectoryList  as directoryListFilesystem;
 use \Magento\Catalog\Model\Category as categoryModel;
@@ -54,6 +56,8 @@ class Autosynccron extends Synccatalog{
                 registry $registry,
                 SalesLayerConn $salesLayerConn,
                 synccatalogDataHelper $synccatalogDataHelper,
+                slDebuger $slDebuger,
+                slJson $slJson,
                 synccatalogConfigHelper $synccatalogConfigHelper,
                 directoryListFilesystem $directoryListFilesystem,
                 categoryModel $categoryModel,
@@ -81,7 +85,9 @@ class Autosynccron extends Synccatalog{
         parent::__construct($context,
                             $registry, 
                             $salesLayerConn, 
-                            $synccatalogDataHelper, 
+                            $synccatalogDataHelper,
+                            $slDebuger,
+                            $slJson,
                             $synccatalogConfigHelper,
                             $directoryListFilesystem,
                             $categoryModel, 
@@ -179,7 +185,7 @@ class Autosynccron extends Synccatalog{
 
             if ($interval >= 480){
 
-                $this->debbug('Killing cron job '.$running_cron['job_code'].' with schedule_id '.$running_cron['schedule_id'].'. Scheduled at '.$running_cron['scheduled_at'].', executed at '.$running_cron['executed_at'].' with time interval of '.$interval.' seconds.', 'autosync');
+                $this->slDebuger->debug('Killing cron job '.$running_cron['job_code'].' with schedule_id '.$running_cron['schedule_id'].'. Scheduled at '.$running_cron['scheduled_at'].', executed at '.$running_cron['executed_at'].' with time interval of '.$interval.' seconds.', 'autosync');
 
                 try{
 
@@ -190,7 +196,7 @@ class Autosynccron extends Synccatalog{
 
                 }catch(\Exception $e){
 
-                    $this->debbug('## Error. Exception killing cron job '.$running_cron['schedule_id'].': '.print_r($e->getMessage(),1), 'autosync');
+                    $this->slDebuger->debug('## Error. Exception killing cron job '.$running_cron['schedule_id'].': '.print_r($e->getMessage(),1), 'autosync');
 
                 }
          
@@ -209,7 +215,7 @@ class Autosynccron extends Synccatalog{
         $this->loadConfigParameters();
         $this->load_magento_variables();
 
-        $this->debbug("==== AUTOSync INIT ".date('Y-m-d H:i:s')." ====", 'autosync');
+        $this->slDebuger->debug("==== AUTOSync INIT ".date('Y-m-d H:i:s')." ====", 'autosync');
         
         $this->delete_sl_logs_since_days();
         $this->check_sync_data_crons();
@@ -220,7 +226,7 @@ class Autosynccron extends Synccatalog{
 
         if (isset($items_processing['count']) && $items_processing['count'] > 0){
 
-            $this->debbug("There are still ".$items_processing['count']." items processing, wait until is finished and synchronize again.", 'autosync');
+            $this->slDebuger->debug("There are still ".$items_processing['count']." items processing, wait until is finished and synchronize again.", 'autosync');
            
         }else{
 
@@ -293,17 +299,17 @@ class Autosynccron extends Synccatalog{
 
                             $connector_id = $connector['connector_id'];
 
-                            $this->debbug("Connector to auto-synchronize: " . $connector_id, 'autosync');
+                            $this->slDebuger->debug("Connector to auto-synchronize: " . $connector_id, 'autosync');
 
                             $time_ini_cron_sync = microtime(1);
 
                             $time_random = rand(10, 20);
                             sleep($time_random);
-                            $this->debbug("#### time_random: " . $time_random . ' seconds.', 'autosync');
+                            $this->slDebuger->debug("#### time_random: " . $time_random . ' seconds.', 'autosync');
                             
                             $data_return = $this->store_sync_data($connector_id, $last_sync);
                             
-                            $this->debbug("#### time_cron_sync: " . (microtime(1) - $time_ini_cron_sync - $time_random) . ' seconds.', 'autosync');
+                            $this->slDebuger->debug("#### time_cron_sync: " . (microtime(1) - $time_ini_cron_sync - $time_random) . ' seconds.', 'autosync');
 
                             
                             if (is_array($data_return)){
@@ -320,7 +326,7 @@ class Autosynccron extends Synccatalog{
                             }else{
 
                                 //If the connector result is not an array must be an error message..
-                                $this->debbug($data_return, 'autosync');
+                                $this->slDebuger->debug($data_return, 'autosync');
 
                             }
 
@@ -329,26 +335,26 @@ class Autosynccron extends Synccatalog{
 
                     }else{
 
-                        $this->debbug("Currently there aren't connectors to synchronize.", 'autosync');
+                        $this->slDebuger->debug("Currently there aren't connectors to synchronize.", 'autosync');
 
                     }
               
                 }else{
 
-                    $this->debbug("There aren't any configured connectors.", 'autosync');
+                    $this->slDebuger->debug("There aren't any configured connectors.", 'autosync');
 
                 }
             } catch (\Exception $e) {
 
-                $this->debbug('## Error. Autosync process: '.$e->getMessage(), 'autosync');
+                $this->slDebuger->debug('## Error. Autosync process: '.$e->getMessage(), 'autosync');
 
             }
 
         }
 
-        $this->debbug('##### time_all_autosync_process: '.(microtime(1) - $this->sl_time_ini_auto_sync_process).' seconds.', 'autosync');
+        $this->slDebuger->debug('##### time_all_autosync_process: '.(microtime(1) - $this->sl_time_ini_auto_sync_process).' seconds.', 'autosync');
 
-        $this->debbug("==== AUTOSync END ====", 'autosync');
+        $this->slDebuger->debug("==== AUTOSync END ====", 'autosync');
 
     }
 
@@ -388,7 +394,7 @@ class Autosynccron extends Synccatalog{
 
                                 if (file_exists($file_path)){
 
-                                    $this->debbug('Deleting SL log: '.$log_folder_file.' for being older than '.$this->delete_sl_logs_since_days.' days.');
+                                    $this->slDebuger->debug('Deleting SL log: '.$log_folder_file.' for being older than '.$this->delete_sl_logs_since_days.' days.');
                                     unlink($file_path);
 
                                 }
@@ -405,7 +411,7 @@ class Autosynccron extends Synccatalog{
 
         }
 
-        // $this->debbug('##### time_delete_sl_logs: '.(microtime(1) - $time_ini_delete_sl_logs).' seconds');
+        // $this->slDebuger->debug('##### time_delete_sl_logs: '.(microtime(1) - $time_ini_delete_sl_logs).' seconds');
 
     }
 

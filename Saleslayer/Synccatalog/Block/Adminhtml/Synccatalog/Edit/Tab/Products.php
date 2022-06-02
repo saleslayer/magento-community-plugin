@@ -1,7 +1,7 @@
 <?php
 namespace Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Edit\Tab;
 
-// use \Magento\Catalog\Model\Category as categoryModel;
+use Saleslayer\Synccatalog\Helper\slJson as slJson;
 
 /**
  * Synccatalog page edit form Parameters tab
@@ -29,7 +29,7 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
      * @var \Magento\ConfigurableProduct\Model\ConfigurableAttributeHandler
      */
     protected $configurableAttributeHandler;
-
+    protected $slJson;
 
     /**
      * @param \Magento\Backend\Block\Template\Context $context
@@ -39,6 +39,8 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
      * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Collection $collectionAttribute
      * @param \Magento\Catalog\Model\Product $productModel,
      * @param \Magento\Eav\Model\Entity\Attribute\Set $setAttribute,
+     * @param \Magento\ConfigurableProduct\Model\ConfigurableAttributeHandler $configurableAttributeHandler
+     * @param Saleslayer\Synccatalog\Helper\slJson $slJson
      * @param array $data
      */
     public function __construct(
@@ -49,13 +51,15 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
         \Magento\Catalog\Model\Product $productModel,
         \Magento\Eav\Model\Entity\Attribute\Set $setAttribute,
         \Magento\ConfigurableProduct\Model\ConfigurableAttributeHandler $configurableAttributeHandler,
+        slJson $slJson,
         array $data = []
     ) {
         parent::__construct($context, $registry, $formFactory, $data);
-        $this->collectionAttribute    = $collectionAttribute;
-        $this->productModel            = $productModel;
-        $this->setAttribute           = $setAttribute;
-        $this->configurableAttributeHandler           = $configurableAttributeHandler;
+        $this->collectionAttribute          = $collectionAttribute;
+        $this->productModel                 = $productModel;
+        $this->setAttribute                 = $setAttribute;
+        $this->configurableAttributeHandler = $configurableAttributeHandler;
+        $this->slJson = $slJson;
     }
 
     /**
@@ -90,14 +94,14 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
             if (isset($modelData['store_view_ids'])
                 && !is_array($modelData['store_view_ids'])
                 && !is_null($modelData['store_view_ids'])){
-                $modelData['store_view_ids'] = json_decode($modelData['store_view_ids'],1);
+                $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
             }else{
                 $modelData['store_view_ids'] = array('0') ;
             }
             if (isset($modelData['format_configurable_attributes'])
                 && !is_array($modelData['format_configurable_attributes'])
                 && !is_null($modelData['format_configurable_attributes'])){
-                $modelData['format_configurable_attributes'] = json_decode($modelData['format_configurable_attributes'],1);
+                $modelData['format_configurable_attributes'] = $this->slJson->unserialize($modelData['format_configurable_attributes']);
             }
             if (isset($modelData['avoid_stock_update']) && $modelData['avoid_stock_update'] == '1'){
                 $avoid_stock_update = true;

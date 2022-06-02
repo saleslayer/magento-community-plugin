@@ -14,6 +14,8 @@ use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
 use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
+use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
+use Saleslayer\Synccatalog\Helper\slJson as slJson;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
 use \Magento\Framework\Filesystem\DirectoryList  as directoryListFilesystem;
 use \Magento\Catalog\Model\Category as categoryModel;
@@ -70,6 +72,8 @@ class Syncdatacron extends Synccatalog{
                 registry $registry,
                 SalesLayerConn $salesLayerConn,
                 synccatalogDataHelper $synccatalogDataHelper,
+                slDebuger $slDebuger,
+                slJson $slJson,
                 synccatalogConfigHelper $synccatalogConfigHelper,
                 directoryListFilesystem $directoryListFilesystem,
                 categoryModel $categoryModel,
@@ -98,6 +102,8 @@ class Syncdatacron extends Synccatalog{
                             $registry, 
                             $salesLayerConn, 
                             $synccatalogDataHelper, 
+                            $slDebuger,
+                            $slJson,
                             $synccatalogConfigHelper,
                             $directoryListFilesystem,
                             $categoryModel, 
@@ -151,12 +157,12 @@ class Syncdatacron extends Synccatalog{
 
             if (!$this->execute_slyr_load_functions()){
 
-                $this->debbug('## Error. Could not load synchronization parameters. Please check error log.', 'syncdata');
+                $this->slDebuger->debug('## Error. Could not load synchronization parameters. Please check error log.', 'syncdata');
                 $this->end_process = true;
 
             }
             
-            $this->category_fields = array('category_field_name', 'category_field_url_key', 'category_field_description', 'category_field_image', 'category_field_meta_title', 'category_field_meta_keywords', 'category_field_meta_description', 'category_field_active', 'category_images_sizes', 'category_field_page_layout','category_field_is_anchor');
+            $this->category_fields = array('category_field_name', 'category_field_url_key', 'category_field_description', 'category_field_image', 'category_field_meta_title', 'category_field_meta_keywords', 'category_field_meta_description', 'category_field_active', 'category_images_sizes', 'category_field_page_layout', 'category_field_is_anchor');
             $this->product_fields = array('product_field_name', 'product_field_description', 'product_field_description_short', 'product_field_price', 'product_field_image', 'product_field_sku', 'product_field_qty', 'product_field_inventory_backorders', 'product_field_inventory_min_sale_qty', 'product_field_inventory_max_sale_qty', 'product_field_meta_title', 'product_field_meta_keywords', 'product_field_meta_description', 'product_field_length', 'product_field_width', 'product_field_height', 'product_field_weight', 'product_field_status', 'product_field_visibility', 'product_field_related_references', 'product_field_crosssell_references', 'product_field_upsell_references', 'product_field_attribute_set_id', 'product_images_sizes','main_image_extension', 'product_field_tax_class_id', 'product_field_country_of_manufacture', 'product_field_special_price', 'product_field_special_from_date', 'product_field_special_to_date', 'grouping_ref_field_linked');
             $this->product_format_fields = array('format_images_sizes', 'main_image_extension', 'format_field_sku', 'format_name', 'format_price', 'format_quantity', 'format_field_inventory_backorders', 'format_field_inventory_min_sale_qty', 'format_field_inventory_max_sale_qty', 'format_image', 'format_field_tax_class_id', 'format_field_country_of_manufacture', 'format_field_visibility', 'format_field_special_price', 'format_field_special_from_date', 'format_field_special_to_date');
 
@@ -235,7 +241,7 @@ class Syncdatacron extends Synccatalog{
             
             if ($minutes < 10){
             
-                $this->debbug('Data is already being processed.', 'syncdata');
+                $this->slDebuger->debug('Data is already being processed.', 'syncdata');
                 $this->end_process = true;
 
                 return;
@@ -244,7 +250,7 @@ class Syncdatacron extends Synccatalog{
                 
             if ($this->syncdata_pid === $current_flag['syncdata_pid']){
 
-                $this->debbug('Pid is the same as current.', 'syncdata');
+                $this->slDebuger->debug('Pid is the same as current.', 'syncdata');
 
             }
 
@@ -272,14 +278,14 @@ class Syncdatacron extends Synccatalog{
                 $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
                                         " SET syncdata_pid = 0, syncdata_last_date = '".date('Y-m-d H:i:s', strtotime('now'))."'".
                                         " WHERE id = ".$current_flag['id'];
-                
+
                 $this->sl_connection_query($sl_query_flag_to_update);
     
             }
         
         }catch(\Exception $e){
 
-            $this->debbug('## Error. Deleting sync_data_flag: '.$e->getMessage(), 'syncdata');
+            $this->slDebuger->debug('## Error. Deleting sync_data_flag: '.$e->getMessage(), 'syncdata');
 
         }
 
@@ -298,7 +304,7 @@ class Syncdatacron extends Synccatalog{
 
         }catch(\Exception $e){
 
-            $this->debbug('## Error. Clearing exceeded attemps: '.$e->getMessage(), 'syncdata');
+            $this->slDebuger->debug('## Error. Clearing exceeded attemps: '.$e->getMessage(), 'syncdata');
 
         }
     }
@@ -319,12 +325,12 @@ class Syncdatacron extends Synccatalog{
          || ($hour_from_time > $hour_until_time && ($hour_now_time >= $hour_from_time || $hour_now_time <= $hour_until_time)) 
          ||  $hour_from_time == $hour_until_time){
             
-            $this->debbug('Current hour '.$hour_now.' for sync data process.', 'syncdata');
+            $this->slDebuger->debug('Current hour '.$hour_now.' for sync data process.', 'syncdata');
         
         } else {
         
             $this->end_process = true;
-            $this->debbug('Current hour '.$hour_now.' is not set between hour from '.$hour_from.' and hour until '.$hour_until.'. Finishing sync data process.', 'syncdata');
+            $this->slDebuger->debug('Current hour '.$hour_now.' is not set between hour from '.$hour_from.' and hour until '.$hour_until.'. Finishing sync data process.', 'syncdata');
         
         }
     }
@@ -342,7 +348,7 @@ class Syncdatacron extends Synccatalog{
 
         if ($this->clean_main_debug_file) file_put_contents($this->sl_logs_path.'_debbug_log_saleslayer_'.date('Y-m-d').'.dat', "");
 
-        $this->debbug("==== Sync Data DB INIT ".date('Y-m-d H:i:s')." ====", 'syncdata');
+        $this->slDebuger->debug("==== Sync Data DB INIT ".date('Y-m-d H:i:s')." ====", 'syncdata');
         
         $this->clearExcededAttemps();
 
@@ -381,9 +387,9 @@ class Syncdatacron extends Synccatalog{
 
         $this->generateSummary();
         
-        $this->debbug('### time_all_syncdata_process: '.(microtime(1) - $this->sl_time_ini_sync_data_process).' seconds.', 'syncdata');
+        $this->slDebuger->debug('### time_all_syncdata_process: '.(microtime(1) - $this->sl_time_ini_sync_data_process).' seconds.', 'syncdata');
 
-        $this->debbug("==== Sync Data DB END ====", 'syncdata');
+        $this->slDebuger->debug("==== Sync Data DB END ====", 'syncdata');
 
     }
 
@@ -469,7 +475,7 @@ class Syncdatacron extends Synccatalog{
 
                 if ($this->end_process){
 
-                    $this->debbug('Breaking syncdata process due to time limit.', 'syncdata');
+                    $this->slDebuger->debug('Breaking syncdata process due to time limit.', 'syncdata');
                     return false;
 
                 }
@@ -512,7 +518,7 @@ class Syncdatacron extends Synccatalog{
 
                     if ($this->end_process){
 
-                        $this->debbug('Breaking syncdata process due to time limit.', 'syncdata');
+                        $this->slDebuger->debug('Breaking syncdata process due to time limit.', 'syncdata');
                         break;
 
                     }
@@ -525,7 +531,7 @@ class Syncdatacron extends Synccatalog{
 
         } catch (\Exception $e) {
 
-            $this->debbug('## Error. Deleting syncdata process: '.$e->getMessage(), 'syncdata');
+            $this->slDebuger->debug('## Error. Deleting syncdata process: '.$e->getMessage(), 'syncdata');
 
         }
 
@@ -539,48 +545,66 @@ class Syncdatacron extends Synccatalog{
     private function deleteItem($item_to_delete){
 
         $sync_tries = $item_to_delete['sync_tries'];
-        $sync_params = json_decode(stripslashes($item_to_delete['sync_params']),1);
-        $this->processing_connector_id = $sync_params['conn_params']['connector_id'];
-        $this->comp_id = $sync_params['conn_params']['comp_id'];
 
-        if($this->comp_id != $sync_params['conn_params']['comp_id']){
-            $this->load_sl_multiconn_table_data(); 
-        } 
-        
-        $this->store_view_ids = $sync_params['conn_params']['store_view_ids'];
+        $sync_params = $this->slJson->unserialize(stripslashes($item_to_delete['sync_params']));
 
-        $sl_id = json_decode(stripslashes($item_to_delete['item_data']),1);
+        $result_delete = '';
 
-        switch ($item_to_delete['item_type']) {
-            case 'category':
-                
-                $result_delete = $this->delete_stored_category_db($sl_id);
-                break;
+        if ($sync_params !== false){
+
+            $this->processing_connector_id = $sync_params['conn_params']['connector_id'];
+
+            if($this->comp_id != $sync_params['conn_params']['comp_id']){
+                $this->comp_id = $sync_params['conn_params']['comp_id'];
+                $this->load_sl_multiconn_table_data(); 
+            } 
             
-            case 'product':
-                
-                $result_delete = $this->delete_stored_product_db($sl_id);
-                break;
+            $this->store_view_ids = $sync_params['conn_params']['store_view_ids'];
 
-            case 'product_format':
-                
-                $result_delete = $this->delete_stored_product_format_db($sl_id);
-                break;
+            $sl_id = $this->slJson->unserialize(stripslashes($item_to_delete['item_data']));
+            
+            if ($sl_id !== false){
 
-            default:
-                
-                $this->debbug('## Error. Incorrect item: '.print_R($item_to_delete,1), 'syncdata');
-                break;
+                switch ($item_to_delete['item_type']) {
+                    case 'category':
+                        
+                        $result_delete = $this->delete_stored_category_db($sl_id);
+                        break;
+                    
+                    case 'product':
+                        
+                        $result_delete = $this->delete_stored_product_db($sl_id);
+                        break;
+
+                    case 'product_format':
+                        
+                        $result_delete = $this->delete_stored_product_format_db($sl_id);
+                        break;
+
+                    default:
+                        
+                        $this->slDebuger->debug('## Error. Incorrect item: '.print_R($item_to_delete,1), 'syncdata');
+                        break;
+                }
+
+                if ($result_delete == 'item_not_deleted'){
+
+                    $sync_tries++;
+
+                    $sql_update = " UPDATE ".$this->saleslayer_syncdata_table." SET sync_tries = ".$sync_tries." WHERE id = ".$item_to_delete['id'];
+
+                    $this->sl_connection_query($sql_update);
+                    
+                }
+
+            }
+
         }
 
-        if( $result_delete == 'item_not_deleted'){
-            $sync_tries++;
+        if ($result_delete !== 'item_not_deleted'){
 
-            $sql_update = " UPDATE ".$this->saleslayer_syncdata_table." SET sync_tries = ".$sync_tries." WHERE id = ".$item_to_delete['id'];
-
-            $this->sl_connection_query($sql_update);
-        }else{
             $this->sql_items_delete[] = $item_to_delete['id'];
+
         }
 
     }
@@ -595,7 +619,7 @@ class Syncdatacron extends Synccatalog{
 
             foreach ($this->processed_items as $processed_item_type => $processed_item_type_count) {
                 
-                $this->debbug('- Processed_items - type: '.$processed_item_type.' count: '.$processed_item_type_count, 'syncdata');
+                $this->slDebuger->debug('- Processed_items - type: '.$processed_item_type.' count: '.$processed_item_type_count, 'syncdata');
 
             }
 
@@ -620,12 +644,12 @@ class Syncdatacron extends Synccatalog{
 
             $time_ini_clean_cache = microtime(1);
             $this->typeListInterface->cleanType($type);
-            if ($this->sl_DEBBUG > 1) $this->debbug('### time_clean_cache: ', 'timer', (microtime(1) - $time_ini_clean_cache));
+            if ($this->sl_DEBBUG > 1) $this->slDebuger->debug('### time_clean_cache: ', 'timer', (microtime(1) - $time_ini_clean_cache));
 
         }
 
-        $this->debbug('Cache cleaned for: '.print_r($types,1));
-        $this->debbug('#### time_clean_all_caches: ', 'timer', (microtime(1) - $time_ini_clean_all_caches));
+        $this->slDebuger->debug('Cache cleaned for: '.print_r($types,1));
+        $this->slDebuger->debug('#### time_clean_all_caches: ', 'timer', (microtime(1) - $time_ini_clean_all_caches));
 
     }
 
@@ -654,22 +678,22 @@ class Syncdatacron extends Synccatalog{
            
                 if (!$categoryIndexer->isScheduled()) {
                 
-                    if ($this->sl_DEBBUG > 0) $this->debbug('Reindexing indexer after product formats sync: '.$indexList, 'syncdata');
+                    if ($this->sl_DEBBUG > 0) $this->slDebuger->debug('Reindexing indexer after product formats sync: '.$indexList, 'syncdata');
                     $categoryIndexer->reindexAll();
                                         
                 }
 
             }catch(\Exception $e){
 
-                $this->debbug('## Error. Updating index row '.$indexList.' : '.print_R($e->getMessage(),1), 'syncdata');
+                $this->slDebuger->debug('## Error. Updating index row '.$indexList.' : '.print_R($e->getMessage(),1), 'syncdata');
 
             }
 
-            if ($this->sl_DEBBUG > 2) $this->debbug('## time_index_row '.$indexList.': ', 'timer', (microtime(1) - $time_ini_index_row));
+            if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('## time_index_row '.$indexList.': ', 'timer', (microtime(1) - $time_ini_index_row));
 
         }
 
-        $this->debbug('#### time_reindex_after_formats: ', 'timer', (microtime(1) - $time_ini_reindex_after_formats));
+        $this->slDebuger->debug('#### time_reindex_after_formats: ', 'timer', (microtime(1) - $time_ini_reindex_after_formats));
 
     }
 
@@ -682,11 +706,11 @@ class Syncdatacron extends Synccatalog{
          
         $sync_tries = $item_to_update['sync_tries'];
         
-        $item_data = json_decode($item_to_update['item_data'],1);
+        $item_data = $this->slJson->unserialize($item_to_update['item_data']);
 
-        if ($item_data == ''){
+        if ($item_data == '' || $item_data === false){
         
-            $this->debbug("## Error. Decoding item's data: ".print_R($item_to_update['item_data'],1), 'syncdata');
+            $this->slDebuger->debug("## Error. Decoding item's data: ".print_R($item_to_update['item_data'],1), 'syncdata');
             $this->sql_items_delete[] = $item_to_update['id'];
             $this->check_sql_items_delete(true);
             return;
@@ -696,6 +720,15 @@ class Syncdatacron extends Synccatalog{
         if ($item_to_update['sync_params'] != ''){
 
             $sync_params = $this->loadSyncParams($item_to_update);
+            
+            if ($sync_params === false){
+
+                $this->slDebuger->debug("## Error. Decoding sync params: ".print_R($item_to_update['sync_params'],1), 'syncdata');
+                $this->sql_items_delete[] = $item_to_update['id'];
+                $this->check_sql_items_delete(true);
+                return;
+
+            }
 
         }
 
@@ -735,7 +768,7 @@ class Syncdatacron extends Synccatalog{
 
             default:
                 
-                $this->debbug('## Error. Incorrect item: '.print_R($item_to_update,1), 'syncdata');
+                $this->slDebuger->debug('## Error. Incorrect item: '.print_R($item_to_update,1), 'syncdata');
                 break;
         }
 
@@ -756,7 +789,13 @@ class Syncdatacron extends Synccatalog{
 
             $resultado = $this->reorganize_category_parent_ids_db($item_data);
 
-            $item_data_string = " item_data = '".json_encode($resultado)."'";
+            $resultado_encoded = $this->slJson->serialize($resultado);
+
+            if ($resultado_encoded !== false){
+
+                $item_data_string = " item_data = '".$resultado_encoded."'";
+
+            }
 
         }
 
@@ -779,7 +818,7 @@ class Syncdatacron extends Synccatalog{
                     
         if (!isset($item_data['product_id']) && !isset($item_data['format_id'])){
 
-            $this->debbug('## Error. Updating item images - Unknown index: '.print_R($item_data,1), 'syncdata');
+            $this->slDebuger->debug('## Error. Updating item images - Unknown index: '.print_R($item_data,1), 'syncdata');
             return 'item_updated';
         }
 
@@ -792,10 +831,10 @@ class Syncdatacron extends Synccatalog{
         }
 
         $time_ini_sync = microtime(1);
-        $this->debbug(' >> '.ucfirst($item_index).' images synchronization initialized << ');
+        $this->slDebuger->debug(' >> '.ucfirst($item_index).' images synchronization initialized << ');
         $this->sync_stored_product_images_db($item_data, $item_index);
-        $this->debbug(' >> '.ucfirst($item_index).' images synchronization finished << ');
-        $this->debbug('#### time_sync_stored_product_images: ', 'timer', (microtime(1) - $time_ini_sync));
+        $this->slDebuger->debug(' >> '.ucfirst($item_index).' images synchronization finished << ');
+        $this->slDebuger->debug('#### time_sync_stored_product_images: ', 'timer', (microtime(1) - $time_ini_sync));
 
         return 'item_updated';
 
@@ -809,10 +848,10 @@ class Syncdatacron extends Synccatalog{
     private function updateProductLinks($item_data){
 
         $time_ini_sync = microtime(1);
-        $this->debbug(' >> Product links synchronization initialized << ');
+        $this->slDebuger->debug(' >> Product links synchronization initialized << ');
         $this->sync_stored_product_links_db($item_data);
-        $this->debbug(' >> Product links synchronization finished << ');
-        $this->debbug('#### time_sync_stored_product_links: ', 'timer', (microtime(1) - $time_ini_sync));
+        $this->slDebuger->debug(' >> Product links synchronization finished << ');
+        $this->slDebuger->debug('#### time_sync_stored_product_links: ', 'timer', (microtime(1) - $time_ini_sync));
         
         return 'item_updated';
 
@@ -856,10 +895,10 @@ class Syncdatacron extends Synccatalog{
         }
         
         $time_ini_sync = microtime(1);
-        $this->debbug(' >> Format synchronization initialized << ');
+        $this->slDebuger->debug(' >> Format synchronization initialized << ');
         $result_update = $this->sync_stored_format_db($item_data);
-        $this->debbug(' >> Format synchronization finished << ');
-        $this->debbug('#### time_sync_stored_product_format: ', 'timer', (microtime(1) - $time_ini_sync));
+        $this->slDebuger->debug(' >> Format synchronization finished << ');
+        $this->slDebuger->debug('#### time_sync_stored_product_format: ', 'timer', (microtime(1) - $time_ini_sync));
 
         $this->updated_product_formats = true;
         
@@ -907,10 +946,10 @@ class Syncdatacron extends Synccatalog{
         }
         
         $time_ini_sync = microtime(1);
-        $this->debbug(' >> Product synchronization initialized << ');
+        $this->slDebuger->debug(' >> Product synchronization initialized << ');
         $result_update = $this->sync_stored_product_db($item_data);
-        $this->debbug(' >> Product synchronization finished << ');
-        $this->debbug('#### time_sync_stored_product: ', 'timer', (microtime(1) - $time_ini_sync));
+        $this->slDebuger->debug(' >> Product synchronization finished << ');
+        $this->slDebuger->debug('#### time_sync_stored_product: ', 'timer', (microtime(1) - $time_ini_sync));
         
         return $result_update;
 
@@ -945,10 +984,10 @@ class Syncdatacron extends Synccatalog{
         }
         
         $time_ini_sync = microtime(1);
-        $this->debbug(' >> Category synchronization initialized << ');
+        $this->slDebuger->debug(' >> Category synchronization initialized << ');
         $result_update = $this->sync_stored_category_db($item_data);
-        $this->debbug(' >> Category synchronization finished << ');
-        $this->debbug('#### time_sync_stored_category: ', 'timer', (microtime(1) - $time_ini_sync));
+        $this->slDebuger->debug(' >> Category synchronization finished << ');
+        $this->slDebuger->debug('#### time_sync_stored_category: ', 'timer', (microtime(1) - $time_ini_sync));
 
         return $result_update;
        
@@ -961,13 +1000,18 @@ class Syncdatacron extends Synccatalog{
      */
     private function loadSyncParams($item_to_update){
 
-        $sync_params = json_decode(stripslashes($item_to_update['sync_params']),1);
-        $this->processing_connector_id = $sync_params['conn_params']['connector_id'];
-        ($this->comp_id != $sync_params['conn_params']['comp_id']) ? $load_sl_multiconn_table_data = true : $load_sl_multiconn_table_data = false;
-        $this->comp_id = $sync_params['conn_params']['comp_id'];
-        if ($load_sl_multiconn_table_data){ $this->load_sl_multiconn_table_data(); }
-        $this->store_view_ids = $sync_params['conn_params']['store_view_ids'];
-        $this->website_ids = $sync_params['conn_params']['website_ids'];
+        $sync_params = $this->slJson->unserialize(stripslashes($item_to_update['sync_params']));
+
+        if ($sync_params !== false){
+
+            $this->processing_connector_id = $sync_params['conn_params']['connector_id'];
+            ($this->comp_id != $sync_params['conn_params']['comp_id']) ? $load_sl_multiconn_table_data = true : $load_sl_multiconn_table_data = false;
+            $this->comp_id = $sync_params['conn_params']['comp_id'];
+            if ($load_sl_multiconn_table_data){ $this->load_sl_multiconn_table_data(); }
+            $this->store_view_ids = $sync_params['conn_params']['store_view_ids'];
+            $this->website_ids = $sync_params['conn_params']['website_ids'];
+
+        }
 
         return $sync_params;
         
