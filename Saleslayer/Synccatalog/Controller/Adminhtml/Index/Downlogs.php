@@ -27,11 +27,6 @@ class Downlogs extends \Magento\Backend\App\Action
 
             $this->messageManager->addError(__('Error downloading SL logs zip.'));
         
-        }else{
-
-            // Pendiente lograr el redirect tras hace el readfile. 
-            // $this->messageManager->addSuccess(__('SL logs zip generated successfully!'));
-        
         }
 
         $this->_redirect('*/index/tools');  

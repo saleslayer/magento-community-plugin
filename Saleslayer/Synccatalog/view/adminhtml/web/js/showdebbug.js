@@ -1,22 +1,13 @@
 require(['jquery'], function($){ 'use strict';
    function sync_custom_command(command) {
 
-        console.log('showdebbug_url desde js sync_custom_command: '+showdebbug_url);
-        // console.log('guau: '+showdebbug_url_phtml);
-        // console.log('guau2: '+showdebbug_url_phtml_head);
-
-       // var showdebbug_url = "<?php echo $block->getUrl('synccatalog/ajax/showdebbug'); ?>";
-       // console.log('showdebbug_url: '+showdebbug_url);
-       console.log('command: '+command);
-               // url: "<?php echo $block->getUrl('synccatalog/ajax/showdebbug'); ?>",
-       $('body').trigger('processStart');
+        $('body').trigger('processStart');
            $.ajax({
                method: "POST",
                url: showdebbug_url,
                data: {'logcommand':command},
                dataType: "json"
            }).done(function (data_return) {
-               // console.log('done');
                if(data_return['message_type'] === 'success'){
                    if(data_return['function'] === 'showlogfiles'){
                        if(data_return['content']['file'].length >= 1){
@@ -174,18 +165,14 @@ require(['jquery'], function($){ 'use strict';
                    clear_message_status();
                }
            }).success(function (data_return) {
-               console.log('success');
+               console.log('Success');
            }).fail(function (data_return) {
                console.log('Ajax connection error: ');
                console.log(data_return);
-           }).always(function (){
-               // $('body').trigger('processStop');
            });
    }
    function files_for_delete(command) {
        $('body').trigger('processStart');
-        console.log('deletelogs_url desde js files_for_delete: '+deletelogs_url);
-        // url: "<?php echo $block->getUrl('synccatalog/ajax/deletelogs'); ?>",
        $.ajax({
            method: "POST",
            url: deletelogs_url,
@@ -267,7 +254,6 @@ require(['jquery'], function($){ 'use strict';
    $(".buttonscommandexecuter").on("click",function(){
         var command = this.name;
         console.log('command en buttonscommandexecuter: '+command);
-       // sync_custom_command('showlogfiles');
         if(command === 'deletelogfile'){
             var  array = [];
             var checkboxes = document.querySelectorAll('input[type=checkbox]:checked');
@@ -282,11 +268,6 @@ require(['jquery'], function($){ 'use strict';
         }
     });
 
-
-
    sync_custom_command('showlogfiles');
-   console.log('hola desde showdebbug.js');
-   // var test = "<?php echo $block->getUrl('synccatalog/ajax/showdebbug'); ?>";
-   // console.log('test: '+test);
 
 })

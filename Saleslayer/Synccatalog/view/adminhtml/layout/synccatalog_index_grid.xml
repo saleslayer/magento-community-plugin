@@ -3,8 +3,5 @@
     <update handle="formkey"/>
     <container name="root" label="Root">
         <block class="Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Grid" name="admin.synccatalog.grid" />
-        <!-- template="summary.phtml" -->
-        <!-- <block class="Magento\Framework\View\Element\Template" name="static_block" template="summary.phtml" cacheable="false" /> -->
-        <!--template="grid.phtml"-->
     </container>
 </page>

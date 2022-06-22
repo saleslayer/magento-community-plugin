@@ -1,13 +1,6 @@
 <?php
 namespace Saleslayer\Synccatalog\Model;
 
-/*
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-set_time_limit(0);
-umask(0);
-*/
-
 use \Magento\Framework\Model\Context as context;
 use \Magento\Framework\Registry as registry;
 use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
@@ -37,6 +30,7 @@ use \Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use \Magento\Framework\App\ProductMetadataInterface as productMetadata;
 use \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use \Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Zend_Db_Expr as Expr;
 
 /**
  * Class Saleslayer_Synccatalog_Model_Autosynccron
@@ -144,7 +138,7 @@ class Autosynccron extends Synccatalog{
       
         return ($unix_a < $unix_b) ? -1 : 1;
     
-    }   
+    }
 
     /**
      * Function to check if sync data crons are stuck
@@ -153,8 +147,13 @@ class Autosynccron extends Synccatalog{
     private function check_sync_data_crons(){
 
         $now = strtotime('now');
-        $date_now = date('Y-m-d H:i:s', $now);
-        $current_flag = $this->connection->query(" SELECT * FROM ".$this->saleslayer_syncdata_flag_table." ORDER BY id DESC LIMIT 1")->fetch();
+        $current_flag = $this->connection->fetchRow(
+            $this->connection->select()
+                ->from($this->saleslayer_syncdata_flag_table)
+                ->order('id DESC')
+                ->limit(1)
+        );
+
 
         if (!empty($current_flag)){
 
@@ -164,11 +163,14 @@ class Autosynccron extends Synccatalog{
                 
                 if ($interval >= 480){
 
-                    $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
-                                            " SET syncdata_pid = 0, syncdata_last_date = '".$date_now."'".
-                                            " WHERE id = ".$current_flag['id'];
+                    $date_now = date('Y-m-d H:i:s', $now);
 
-                    $this->sl_connection_query($sl_query_flag_to_update);
+                    $values_to_update = array(
+                        'syncdata_pid' => new Expr('0'),
+                        'syncdata_last_date' => $date_now,
+                    );
+
+                    $this->connection->update($this->saleslayer_syncdata_flag_table, $values_to_update, 'id = '.$current_flag['id']);
 
                 }
 
@@ -222,11 +224,13 @@ class Autosynccron extends Synccatalog{
 
         $this->sl_time_ini_auto_sync_process = microtime(1);
         
-        $items_processing = $this->connection->query(" SELECT count(*) as count FROM ".$this->saleslayer_syncdata_table)->fetch();
+        $items_processing = $this->connection->fetchOne(
+            $this->connection->select()->from($this->saleslayer_syncdata_table, [new Expr('COUNT(*)')])
+        );
+        
+        if (isset($items_processing) && $items_processing > 0){
 
-        if (isset($items_processing['count']) && $items_processing['count'] > 0){
-
-            $this->slDebuger->debug("There are still ".$items_processing['count']." items processing, wait until is finished and synchronize again.", 'autosync');
+            $this->slDebuger->debug("There are still ".$items_processing." items processing, wait until is finished and synchronize again.", 'autosync');
            
         }else{
 
@@ -365,8 +369,6 @@ class Autosynccron extends Synccatalog{
     private function delete_sl_logs_since_days(){
 
         if (in_array($this->delete_sl_logs_since_days, array('', null, 0))) return false;
-
-        $time_ini_delete_sl_logs = microtime(1);
         
         $log_folder_files = scandir($this->sl_logs_path);
 
@@ -410,8 +412,6 @@ class Autosynccron extends Synccatalog{
             }
 
         }
-
-        // $this->slDebuger->debug('##### time_delete_sl_logs: '.(microtime(1) - $time_ini_delete_sl_logs).' seconds');
 
     }
 

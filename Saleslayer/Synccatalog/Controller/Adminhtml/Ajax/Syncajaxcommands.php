@@ -27,7 +27,7 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
     {
 
         $command = $this->getRequest()->getParam('command');
-        $permited_command = array('unlinkelements','infopreload','removelogs','removeindexes','deleteregs','deleteunusedimages');
+        $permited_command = array('infopreload','removelogs','removeindexes','deleteregs','deleteunusedimages');
         /** @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $array_return = array();
@@ -37,11 +37,6 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
             $return_message = '';
 
             switch ($command){
-                case 'unlinkelements':
-                    $this->modelo->unlinkOldItems();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
                 case 'infopreload':
                     $this->modelo->loadMulticonnItems();
                     $response->setHeader('Content-type', 'text/plain');
@@ -72,8 +67,7 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
                      break;
             }
 
-            $field_names = array('unlinkelements'       => 'Old elements unlink',
-                                 'infopreload'          => 'Multi-connector information load',
+            $field_names = array('infopreload'          => 'Multi-connector information load',
                                  'removelogs'           => 'Sales Layer logs delete',
                                  'removeindexes'        => 'Sales Layer indexes delete',
                                  'deleteregs'           => 'Sales Layer regs delete',

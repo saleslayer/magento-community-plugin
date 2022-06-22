@@ -79,9 +79,6 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         
         $this->addColumn('connector_id', ['header' => __('Connector ID'), 'index' => 'connector_id']);
 
-        // $this->addColumn('store_view_ids', ['header' => __('Store View IDs'), 'index' => 'store_view_ids']);
-        // $this->addColumn('secret_key', ['header' => __('Secret Key'), 'index' => 'secret_key']);
-        
         $this->addColumn(
             'last_update',
             [
@@ -93,27 +90,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
             ]
         );
 
-        // $this->addColumn(
-        //     'sync_data',
-        //     [
-        //         'header' => __('Synchronization Data'),
-        //         'index' => 'sync_ata',
-        //         'header_css_class' => 'col-sync',
-        //         'column_css_class' => 'col-sync'
-        //     ]
-        // );
-
-        $test = parent::_prepareColumns();
-
-        // $file = BP.'/_debbug_log_saleslayer_test.txt';
-
-        // foreach ($test as $key => $t) {
-        //     // file_put_contents($file, 'test_data: '.print_r($test->getMultipleRows($test),1), FILE_APPEND);
-        //     file_put_contents($file, 'test_data: '.print_r($t,1), FILE_APPEND);
-        // }
-
-        return $test;
-        // return parent::_prepareColumns();
+        return parent::_prepareColumns();
     }
 
     /**

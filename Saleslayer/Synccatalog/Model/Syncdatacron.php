@@ -1,13 +1,6 @@
 <?php
 namespace Saleslayer\Synccatalog\Model;
 
-/*
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-set_time_limit(0);
-umask(0);
-*/
-
 use \Magento\Framework\Model\Context as context;
 use \Magento\Framework\Registry as registry;
 use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
@@ -52,9 +45,6 @@ class Syncdatacron extends Synccatalog{
     protected       $category_fields                    = array();
     protected       $product_fields                     = array();
     protected       $product_format_fields              = array();
-    // protected       $indexers_status                    = 'default';
-    // protected       $indexer_collection_ids             = array();
-    // protected       $indexers_info                      = array();
     protected       $syncdata_pid;
     protected       $processed_items                    = array();
     protected       $cats_to_process                    = false;
@@ -204,15 +194,23 @@ class Syncdatacron extends Synccatalog{
      */
     private function check_sync_data_flag(){
 
-        $items_to_process = $this->connection->query(" SELECT count(*) as count FROM ".$this->saleslayer_syncdata_table)->fetch();
+        $items_to_process = $this->connection->fetchOne(
+            $this->connection->select()->from($this->saleslayer_syncdata_table, [new Expr('COUNT(*)')])
+        );
         
-        if (isset($items_to_process['count']) && $items_to_process['count'] > 0){
+        if (isset($items_to_process) && $items_to_process > 0){
 
-            $current_flag = $this->connection->query(" SELECT * FROM ".$this->saleslayer_syncdata_flag_table." ORDER BY id DESC LIMIT 1")->fetch();
+            $current_flag = $this->connection->fetchRow(
+                $this->connection->select()
+                    ->from($this->saleslayer_syncdata_flag_table)
+                    ->order('id DESC')
+                    ->limit(1)
+            );
+            
             $now = strtotime('now');
             $date_now = date('Y-m-d H:i:s', $now);
 
-            if ( empty($current_flag)){
+            if (empty($current_flag)){
 
                 $sl_query_flag_to_insert = " INSERT INTO ".$this->saleslayer_syncdata_flag_table.
                                          " ( syncdata_pid, syncdata_last_date) VALUES ".
@@ -271,7 +269,12 @@ class Syncdatacron extends Synccatalog{
     private function disable_sync_data_flag(){
         try{
 
-            $current_flag = $this->connection->query(" SELECT * FROM ".$this->saleslayer_syncdata_flag_table." ORDER BY id DESC LIMIT 1")->fetch();
+            $current_flag = $this->connection->fetchRow(
+                $this->connection->select()
+                    ->from($this->saleslayer_syncdata_flag_table)
+                    ->order('id DESC')
+                    ->limit(1)
+            );
 
             if (!empty($current_flag)){
     

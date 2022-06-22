@@ -143,9 +143,7 @@ class InstallData implements InstallDataInterface
             'apply_to' => '',
             'note' => "Don't modify or delete this field."
         ]
-        );
-
-        
+        ); 
        
 	}
 }

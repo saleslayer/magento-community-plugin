@@ -101,7 +101,6 @@ class Synccatalog extends \Magento\Framework\View\Element\Template
         $pager = $this->getChildBlock('synccatalog_list_pager');
         if ($pager instanceof \Magento\Framework\Object) {
             
-            // $pager->setAvailableLimit([$synccatalogPerPage => $synccatalogPerPage]);
             $pager->setTotalNum($this->getCollection()->getSize());
             $pager->setCollection($this->getCollection());
             $pager->setShowPerPage(TRUE);

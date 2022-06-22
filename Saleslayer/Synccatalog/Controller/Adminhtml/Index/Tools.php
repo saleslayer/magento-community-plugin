@@ -12,19 +12,19 @@ class Tools extends \Magento\Backend\App\Action
      */
     protected $_coreRegistry = null;
 
-	/**
+    /**
      * @var \Magento\Framework\View\Result\PageFactory
      */
     protected $resultPageFactory;
-	
+    
     /**
      * @param Action\Context $context
-	 * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      * @param \Magento\Framework\Registry $registry
      */
     public function __construct(Action\Context $context, \Magento\Framework\View\Result\PageFactory $resultPageFactory, \Magento\Framework\Registry $registry)
     {
-		$this->resultPageFactory = $resultPageFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->_coreRegistry = $registry;
         parent::__construct($context);
     }
@@ -45,25 +45,10 @@ class Tools extends \Magento\Backend\App\Action
 
     protected function _initAction()
     {
-        // load layout, set active menu and breadcrumbs
-		/** @var \Magento\Backend\Model\View\Result\Page $resultPage */
-      $resultPage = $this->resultPageFactory->create();
-       /* $resultPage->setActiveMenu(
-            'Saleslayer_Synccatalog::synccatalog_tools'
-        );*/
 
+        $resultPage = $this->resultPageFactory->create();
+        return $resultPage;
 
-       /*
-        $resultPage->setActiveMenu(
-            'Saleslayer_Synccatalog::synccatalog_manage'
-        )->addBreadcrumb(
-            __('Synccatalog'),
-            __('Synccatalog')
-        )->addBreadcrumb(
-            __('Manage Synccatalog'),
-            __('Manage Synccatalog')
-        );*/
-		return $resultPage;
     }
 
     /**
@@ -74,16 +59,6 @@ class Tools extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-
-        // $resultPage = $this->_initAction();
-        // $resultPage->addBreadcrumb(
-        //     __('Tools'),
-        //     __('Tools')
-        // );
-        // $resultPage->getConfig()->getTitle()
-        //     ->prepend( __('Sales Layer tools'));
-        
-        // return $resultPage;
 
         // 1. Get ID and create model
         $id = $this->getRequest()->getParam('id');
@@ -107,20 +82,17 @@ class Tools extends \Magento\Backend\App\Action
             $model->setData($data);
         }
 
-        // 4. Register model to use later in blocks
-       // $this->_coreRegistry->register('fortools', $model);
-
-        // 5. Build edit form
-		/** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        // 4. Build edit form
+        /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->_initAction();
         $resultPage->addBreadcrumb(
             $id ? __('Tools') : __('Tools'),
             $id ? __('Tools') : __('Tools')
         );
-        //$resultPage->getConfig()->getTitle()->prepend(__('Synccatalog'));
+        
         $resultPage->getConfig()->getTitle()
             ->prepend( __('Sales Layer tools'));
-			
+            
         return $resultPage;
     }
 }

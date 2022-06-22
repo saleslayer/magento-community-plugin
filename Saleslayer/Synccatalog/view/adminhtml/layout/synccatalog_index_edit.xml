@@ -2,8 +2,6 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>
         <css src="jquery/fileUploader/css/jquery.fileupload-ui.css"/>
-        <!-- <link src="jquery/fileUploader/bootstrap.js"/> -->
-        <!-- <link src="..\..\synchronize.js"/> -->
         <link src="Saleslayer_Synccatalog::js/synchronize.js"/>
     </head>
     <update handle="editor"/>

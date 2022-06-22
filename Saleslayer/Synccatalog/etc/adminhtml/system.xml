@@ -16,11 +16,6 @@
                     <comment>Sales Layer logs are stored at /var/logs/</comment>
                     <source_model>Saleslayer\Synccatalog\Model\Config\ActivateDebugLogs\DebugerLevels</source_model>
                 </field>
-                <!--<field id="manage_indexers" translate="label comment" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Manage indexers</label>
-                    <comment>Indexers will be stopped when a connector stores data to synchronize, and after all data has been synchronized, they'll recover their previous state and get reindexed.</comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>-->
                 <field id="sql_to_insert_limit" translate="label comment" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>SQL limit rows to insert</label>
                     <comment>When storing the information, number of rows per batch that will be inserted into database. Please enter a value between at least 1 and 20.</comment>

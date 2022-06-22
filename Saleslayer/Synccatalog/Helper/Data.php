@@ -5,6 +5,7 @@
 namespace Saleslayer\Synccatalog\Helper;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -60,6 +61,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @var \Magento\Swatches\Model\ResourceModel\Swatch\CollectionFactory
      */
     protected $swatchCollectionFactory;
+    protected $slDebuger;
 
     /**
      * Data constructor.
@@ -81,7 +83,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Swatches\Model\ResourceModel\Swatch\CollectionFactory $swatchCollectionFactory,
         \Magento\Eav\Api\Data\AttributeOptionLabelInterfaceFactory $optionLabelFactory,
         \Magento\Eav\Api\Data\AttributeOptionInterfaceFactory $optionFactory,
-        \Magento\Eav\Api\AttributeOptionManagementInterface $attributeOptionManagement
+        \Magento\Eav\Api\AttributeOptionManagementInterface $attributeOptionManagement,
+        slDebuger $slDebuger
     ) {
         parent::__construct($context);
         $this->attributeRepository = $attributeRepository;
@@ -94,6 +97,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->optionLabelFactory = $optionLabelFactory;
         $this->optionFactory = $optionFactory;
         $this->attributeOptionManagement = $attributeOptionManagement;
+        $this->slDebuger = $slDebuger;
     }
 
     /**
@@ -104,11 +108,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param string $optionDefaultValue value to save  if $option_stores view is null
      * return booleano
      */
-    // public function updateAttributeOption($attribute_code, $option_id, $option_value, $option_data){
     public function updateAttributeOption($attribute_code, $option_id, $option_data){
         
-        // $this->debbug_data('updateAttributeOption - attribute_code: '.$attribute_code.' - option_id: '.$option_id.' - option_value: '.$option_value.' - option_data: '.print_R($option_data,1));
-     
         try{
 
             $attribute = $this->getAttribute($attribute_code);
@@ -138,7 +139,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         }catch(\Exception $e){
 
-            // $this->debbug_data('## Error on saving cloned option from attribute: '.print_R($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving cloned option from attribute: '.print_R($e->getMessage(),1));
             return false;
 
         }
@@ -150,7 +151,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         
         }catch(\Exception $e){
         
-            // $this->debbug_data('## Error on saving setSortOrder: '.print_R($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving setSortOrder: '.print_R($e->getMessage(),1));
 
         }
 
@@ -182,7 +183,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
            }catch(\Exception $e){
 
-               // $this->debbug_data('## Error creating new swatch: '.$e->getMessage());
+               $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
 
            }
         
@@ -214,12 +215,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function createOrGetId($attributeCode, $label, $store_ids){
 
-        // $this->debbug_data('createOrGetId - attributeCode: '.$attributeCode.' - label: '.$label.' - store_ids: '.print_R($store_ids,1));
-
         if (strlen($label) < 1) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('Label for %1 must not be empty.', $attributeCode)
-            );
+            $this->slDebuger->debug('## Error creating new option. Label for '.$attributeCode.' must not be empty.');
+            return false;            
         }
 
         if (empty($store_ids)){
@@ -229,12 +227,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             if (!in_array(0, $this->store_ids)){ $this->store_ids[] = 0; }
         }
 
-        
-        // Does it already exist?
         $optionId = $this->getOptionId($attributeCode, $label);
         
         if (!$optionId){
-            // If no, add it.
+
             $attribute = $this->getAttribute($attributeCode);
 
             $swatch_input_type = 'dropdown';
@@ -290,7 +286,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             }catch(\Exception $e){
 
-                // $this->debbug_data('## Error creating new option: '.$e->getMessage());
+                $this->slDebuger->debug('## Error creating new option: '.$e->getMessage());
 
             }
 
@@ -322,7 +318,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                }catch(\Exception $e){
 
-                   // $this->debbug_data('## Error creating new swatch: '.$e->getMessage());
+                   $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
 
                }
             
@@ -344,17 +340,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getOptionId($attributeCode, $label, $force = false){
         
-        /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $attribute */
         $attribute = $this->getAttribute($attributeCode);
 
-        // Build option array if necessary
-        if ($force === true || !isset($this->attributeValues[ $attribute->getAttributeId() ])) {
-            $this->attributeValues[ $attribute->getAttributeId() ] = [];
+        if ($force === true || !isset($this->attributeValues[$attribute->getAttributeId()])) {
+            $this->attributeValues[$attribute->getAttributeId()] = array();
 
             // We have to generate a new sourceModel instance each time through to prevent it from
             // referencing its _options cache. No other way to get it to pick up newly-added values.
 
-            /** @var \Magento\Eav\Model\Entity\Attribute\Source\Table $sourceModel */
             $sourceModel = $this->tableFactory->create();
             $sourceModel->setAttribute($attribute);
 
@@ -363,12 +356,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        // Return option ID if exists
         if (isset($this->attributeValues[ $attribute->getAttributeId() ][ $label ])) {
             return $this->attributeValues[ $attribute->getAttributeId() ][ $label ];
         }
 
-        // Return false if does not exist
         return false;
     }
 
@@ -398,16 +389,5 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $sort_order;
 
     }
-
-    /**
-     * Function to debbug into a Sales Layer log.
-     * @param  string $msg      message to save
-     * @return void
-     */
-    // public function debbug_data($str){
-
-    //     file_put_contents(BP.'/var/log/_debbug_log_saleslayer_'.date('Y-m-d').'.dat', "$str\r\n", FILE_APPEND);
-
-    // }
 
 }
