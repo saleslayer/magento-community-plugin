@@ -666,7 +666,6 @@ class SalesLayerConn {
         return false;
     }
 
-
     /**
      * Set the error code and message
      *

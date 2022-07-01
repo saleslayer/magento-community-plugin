@@ -7,6 +7,7 @@ use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
 use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
+use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
@@ -25,10 +26,8 @@ use Zend_Db_Expr as Expr;
 use \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
 use \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
 use \Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
-use \Magento\Framework\App\DeploymentConfig as deploymentConfig;
 use \Magento\Eav\Model\Config as eavConfig;
 use \Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
-use \Magento\Framework\App\ProductMetadataInterface as productMetadata;
 use \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use \Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 
@@ -62,6 +61,7 @@ class Syncdatacron extends Synccatalog{
                 registry $registry,
                 SalesLayerConn $salesLayerConn,
                 synccatalogDataHelper $synccatalogDataHelper,
+                slConnection $slConnection,
                 slDebuger $slDebuger,
                 slJson $slJson,
                 synccatalogConfigHelper $synccatalogConfigHelper,
@@ -79,10 +79,8 @@ class Syncdatacron extends Synccatalog{
                 categoryUrlPathGenerator $categoryUrlPathGenerator,
                 productUrlPathGenerator $productUrlPathGenerator,
                 catalogInventoryConfiguration $catalogInventoryConfiguration,
-                deploymentConfig $deploymentConfig,
                 eavConfig $eavConfig,
                 typeListInterface $typeListInterface,
-                productMetadata $productMetadata,
                 countryOfManufacture $countryOfManufacture,
                 layoutSource $layoutSource,
                 resource $resource = null,
@@ -91,7 +89,8 @@ class Syncdatacron extends Synccatalog{
         parent::__construct($context,
                             $registry, 
                             $salesLayerConn, 
-                            $synccatalogDataHelper, 
+                            $synccatalogDataHelper,
+                            $slConnection,
                             $slDebuger,
                             $slJson,
                             $synccatalogConfigHelper,
@@ -109,10 +108,8 @@ class Syncdatacron extends Synccatalog{
                             $categoryUrlPathGenerator,
                             $productUrlPathGenerator,
                             $catalogInventoryConfiguration,
-                            $deploymentConfig,
                             $eavConfig,
                             $typeListInterface,
-                            $productMetadata,
                             $countryOfManufacture,
                             $layoutSource,
                             $resource,
@@ -172,13 +169,11 @@ class Syncdatacron extends Synccatalog{
         if (count($this->sql_items_delete) >= 20 || ($force_delete && count($this->sql_items_delete) > 0)){
             
             if ($this->test_one_item === false){
-            
-                $items = implode(',', $this->sql_items_delete);
-
-                $sql_delete = " DELETE FROM ".$this->saleslayer_syncdata_table.
-                                    " WHERE id IN (".$items.")";
-
-                $this->sl_connection_query($sql_delete);
+        
+                $this->slConnection->slDBDelete(
+                    $this->slConnection->getTable($this->saleslayer_syncdata_table),
+                    ['id IN ('.implode(',',$this->sql_items_delete).')']
+                );
 
             }
 
@@ -195,14 +190,17 @@ class Syncdatacron extends Synccatalog{
     private function check_sync_data_flag(){
 
         $items_to_process = $this->connection->fetchOne(
-            $this->connection->select()->from($this->saleslayer_syncdata_table, [new Expr('COUNT(*)')])
+            $this->connection->select()->from(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                [new Expr('COUNT(*)')]
+            )
         );
         
         if (isset($items_to_process) && $items_to_process > 0){
 
             $current_flag = $this->connection->fetchRow(
                 $this->connection->select()
-                    ->from($this->saleslayer_syncdata_flag_table)
+                    ->from($this->slConnection->getTable($this->saleslayer_syncdata_flag_table))
                     ->order('id DESC')
                     ->limit(1)
             );
@@ -212,11 +210,16 @@ class Syncdatacron extends Synccatalog{
 
             if (empty($current_flag)){
 
-                $sl_query_flag_to_insert = " INSERT INTO ".$this->saleslayer_syncdata_flag_table.
-                                         " ( syncdata_pid, syncdata_last_date) VALUES ".
-                                         "('".$this->syncdata_pid."', '".$date_now."')";
-                
-                $this->sl_connection_query($sl_query_flag_to_insert);
+                $values_to_insert = [
+                    'syncdata_pid' => $this->syncdata_pid,
+                    'syncdata_last_date' => $date_now
+                ];
+
+                $this->slConnection->slDBInsert(
+                    $this->slConnection->getTable($this->saleslayer_syncdata_flag_table),
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
                 return;
             }
@@ -224,11 +227,16 @@ class Syncdatacron extends Synccatalog{
                 
             if ($current_flag['syncdata_pid'] == 0){
             
-                $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
-                                        " SET syncdata_pid = ".$this->syncdata_pid.", syncdata_last_date = '".$date_now."'".
-                                        " WHERE id = ".$current_flag['id'];
-            
-                $this->sl_connection_query($sl_query_flag_to_update);
+                $values_to_update = array(
+                    'syncdata_pid' => $this->syncdata_pid,
+                    'syncdata_last_date' => $date_now,
+                );
+
+                $this->slConnection->slDBUpdate(
+                    $this->slConnection->getTable($this->saleslayer_syncdata_flag_table), 
+                    $values_to_update, 
+                    'id = '.$current_flag['id']
+                );
 
                 return;
 
@@ -251,12 +259,17 @@ class Syncdatacron extends Synccatalog{
                 $this->slDebuger->debug('Pid is the same as current.', 'syncdata');
 
             }
+            
+            $values_to_update = array(
+                'syncdata_pid' => $this->syncdata_pid,
+                'syncdata_last_date' => $date_now,
+            );
 
-            $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
-                                    " SET syncdata_pid = ".$this->syncdata_pid.", syncdata_last_date = '".$date_now."'".
-                                    " WHERE id = ".$current_flag['id'];
-
-            $this->sl_connection_query($sl_query_flag_to_update);
+            $this->slConnection->slDBUpdate(
+                $this->slConnection->getTable($this->saleslayer_syncdata_flag_table), 
+                $values_to_update, 
+                'id = '.$current_flag['id']
+            );
             
         }
 
@@ -267,29 +280,37 @@ class Syncdatacron extends Synccatalog{
     * @return void
     */
     private function disable_sync_data_flag(){
+        
         try{
 
             $current_flag = $this->connection->fetchRow(
                 $this->connection->select()
-                    ->from($this->saleslayer_syncdata_flag_table)
+                    ->from($this->slConnection->getTable($this->saleslayer_syncdata_flag_table))
                     ->order('id DESC')
                     ->limit(1)
             );
-
-            if (!empty($current_flag)){
-    
-                $sl_query_flag_to_update = " UPDATE ".$this->saleslayer_syncdata_flag_table.
-                                        " SET syncdata_pid = 0, syncdata_last_date = '".date('Y-m-d H:i:s', strtotime('now'))."'".
-                                        " WHERE id = ".$current_flag['id'];
-
-                $this->sl_connection_query($sl_query_flag_to_update);
-    
-            }
         
         }catch(\Exception $e){
 
-            $this->slDebuger->debug('## Error. Deleting sync_data_flag: '.$e->getMessage(), 'syncdata');
+            $this->slDebuger->debug('## Error. Reading current_flag: '.$e->getMessage(), 'syncdata');
 
+        }
+
+        if (!empty($current_flag)){
+        
+            $values_to_update = array(
+                'syncdata_pid' => 0,
+                'syncdata_last_date' => date('Y-m-d H:i:s', strtotime('now')),
+            );
+
+            $this->slConnection->slDBUpdate(
+                $this->slConnection->getTable($this->saleslayer_syncdata_flag_table), 
+                $values_to_update, 
+                'id = '.$current_flag['id'],
+                'Deleting sync_data_flag',
+                'syncdata'
+            );
+        
         }
 
     }
@@ -299,17 +320,14 @@ class Syncdatacron extends Synccatalog{
      * @return void
      */
     private function clearExcededAttemps(){
-        try{
-            
-            $sql_delete = " DELETE FROM ".$this->saleslayer_syncdata_table." WHERE sync_tries >= 3";
+        
+        $this->slConnection->slDBDelete(
+            $this->slConnection->getTable($this->saleslayer_syncdata_table),
+            ['sync_tries >= 3'],
+            'Clearing exceeded attemps',
+            'syncdata'
+        );
 
-            $this->sl_connection_query($sql_delete);
-
-        }catch(\Exception $e){
-
-            $this->slDebuger->debug('## Error. Clearing exceeded attemps: '.$e->getMessage(), 'syncdata');
-
-        }
     }
 
     /**
@@ -439,11 +457,34 @@ class Syncdatacron extends Synccatalog{
         
         do{
 
-            $items_to_update = $this->connection->fetchAll(" SELECT * FROM ".$this->saleslayer_syncdata_table." WHERE sync_type = 'update' and item_type = '".$index."' and sync_tries <= 2 ORDER BY item_type ASC, sync_tries ASC, id ASC LIMIT 5");
+            $items_to_update = $this->connection->fetchAll(
+                $this->connection->select()
+                    ->from(
+                       $this->slConnection->getTable($this->saleslayer_syncdata_table)
+                    )
+                    ->where("sync_type = 'update'")
+                    ->where("item_type = ? ", $index)
+                    ->where('sync_tries <= 2')
+                    ->order('sync_tries ASC')
+                    ->order('id ASC')
+                    ->limit(5)
+            );
 
             if ($this->test_one_item !== false && is_numeric($this->test_one_item)){
 
-                $items_to_update = $this->connection->fetchAll(" SELECT * FROM ".$this->saleslayer_syncdata_table." WHERE sync_type = 'update' and item_type = '".$index."' and sync_tries <= 2 and id = ".$this->test_one_item." ORDER BY item_type ASC, sync_tries ASC, id ASC LIMIT 5");
+                $items_to_update = $this->connection->fetchAll(
+                    $this->connection->select()
+                        ->from(
+                           $this->slConnection->getTable($this->saleslayer_syncdata_table)
+                        )
+                        ->where("sync_type = 'update'")
+                        ->where("item_type = ? ", $this->test_one_item)
+                        ->where('sync_tries <= 2')
+                        ->where('id = ?', 1500)
+                        ->order('sync_tries ASC')
+                        ->order('id ASC')
+                        ->limit(5)
+                );
 
             }
 
@@ -508,7 +549,16 @@ class Syncdatacron extends Synccatalog{
 
         try {
 
-            $items_to_delete = $this->connection->fetchAll(" SELECT * FROM ".$this->saleslayer_syncdata_table." WHERE sync_type = 'delete' ORDER BY item_type ASC, sync_tries ASC, id ASC");
+            $items_to_delete = $this->connection->fetchAll(
+                $this->connection->select()
+                    ->from(
+                       $this->slConnection->getTable($this->saleslayer_syncdata_table)
+                    )
+                    ->where("sync_type = 'delete'")
+                    ->order('item_type ASC')
+                    ->order('sync_tries ASC')
+                    ->order('id ASC')
+            );
             
             if (!empty($items_to_delete)){
                 
@@ -594,9 +644,15 @@ class Syncdatacron extends Synccatalog{
 
                     $sync_tries++;
 
-                    $sql_update = " UPDATE ".$this->saleslayer_syncdata_table." SET sync_tries = ".$sync_tries." WHERE id = ".$item_to_delete['id'];
+                    $values_to_update = array(
+                        'sync_tries' => $sync_tries
+                    );
 
-                    $this->sl_connection_query($sql_update);
+                    $this->slConnection->slDBUpdate(
+                        $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                        $values_to_update, 
+                        'id = '.$item_to_delete['id']
+                    );
                     
                 }
 
@@ -666,7 +722,7 @@ class Syncdatacron extends Synccatalog{
 
         $indexLists = array('catalog_product_attribute', 'catalogrule_product');
 
-        if (version_compare($this->mg_version, '2.4.0') >= 0) {
+        if (version_compare($this->slConnection->mg_version, '2.4.0') >= 0) {
         
             $indexLists[] = 'catalogsearch_fulltext';
 
@@ -786,7 +842,10 @@ class Syncdatacron extends Synccatalog{
         }
              
         $sync_tries++;
-        $item_data_string = '';
+
+        $values_to_update = array(
+            'sync_tries' => $sync_tries
+        );
         
         if ($sync_tries == 2 && $item_to_update['item_type'] == 'category'){
 
@@ -796,18 +855,18 @@ class Syncdatacron extends Synccatalog{
 
             if ($resultado_encoded !== false){
 
-                $item_data_string = " item_data = '".$resultado_encoded."'";
-
+                $values_to_update['item_data'] = $resultado_encoded;
+      
             }
 
         }
 
-        $sql_update = " UPDATE ".$this->saleslayer_syncdata_table.
-                                    " SET sync_tries = ".$sync_tries.
-                                    $item_data_string.
-                                    " WHERE id = ".$item_to_update['id'];
+        $this->slConnection->slDBUpdate(
+            $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+            $values_to_update, 
+            'id = '.$item_to_update['id']
+        );
 
-        $this->sl_connection_query($sql_update);
         $this->check_sql_items_delete(true);
 
     }

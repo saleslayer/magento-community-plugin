@@ -7,6 +7,7 @@ use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
 use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
+use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
@@ -24,10 +25,8 @@ use \Magento\Framework\App\Config\ScopeConfigInterface as scopeConfigInterface;
 use \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
 use \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
 use \Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
-use \Magento\Framework\App\DeploymentConfig as deploymentConfig;
 use \Magento\Eav\Model\Config as eavConfig;
 use \Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
-use \Magento\Framework\App\ProductMetadataInterface as productMetadata;
 use \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use \Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Zend_Db_Expr as Expr;
@@ -38,7 +37,6 @@ use Zend_Db_Expr as Expr;
 class Autosynccron extends Synccatalog{
     
     protected       $sl_time_ini_auto_sync_process;
-    protected       $cron_schedule_table            = 'cron_schedule';
     protected       $cronSchedule;
 
     /**
@@ -50,6 +48,7 @@ class Autosynccron extends Synccatalog{
                 registry $registry,
                 SalesLayerConn $salesLayerConn,
                 synccatalogDataHelper $synccatalogDataHelper,
+                slConnection $slConnection,
                 slDebuger $slDebuger,
                 slJson $slJson,
                 synccatalogConfigHelper $synccatalogConfigHelper,
@@ -67,10 +66,8 @@ class Autosynccron extends Synccatalog{
                 categoryUrlPathGenerator $categoryUrlPathGenerator,
                 productUrlPathGenerator $productUrlPathGenerator,
                 catalogInventoryConfiguration $catalogInventoryConfiguration,
-                deploymentConfig $deploymentConfig,
                 eavConfig $eavConfig,
                 typeListInterface $typeListInterface,
-                productMetadata $productMetadata,
                 countryOfManufacture $countryOfManufacture,
                 layoutSource $layoutSource,
                 resource $resource = null,
@@ -80,6 +77,7 @@ class Autosynccron extends Synccatalog{
                             $registry, 
                             $salesLayerConn, 
                             $synccatalogDataHelper,
+                            $slConnection,
                             $slDebuger,
                             $slJson,
                             $synccatalogConfigHelper,
@@ -97,16 +95,13 @@ class Autosynccron extends Synccatalog{
                             $categoryUrlPathGenerator,
                             $productUrlPathGenerator,
                             $catalogInventoryConfiguration,
-                            $deploymentConfig,
                             $eavConfig,
                             $typeListInterface,
-                            $productMetadata,
                             $countryOfManufacture,
                             $layoutSource,
                             $resource,
                             $resourceCollection,
                             $data);
-        $this->cron_schedule_table           = $this->resourceConnection->getTableName($this->cron_schedule_table);
 
     }
     
@@ -149,11 +144,10 @@ class Autosynccron extends Synccatalog{
         $now = strtotime('now');
         $current_flag = $this->connection->fetchRow(
             $this->connection->select()
-                ->from($this->saleslayer_syncdata_flag_table)
+                ->from($this->slConnection->getTable($this->saleslayer_syncdata_flag_table))
                 ->order('id DESC')
                 ->limit(1)
         );
-
 
         if (!empty($current_flag)){
 
@@ -170,7 +164,11 @@ class Autosynccron extends Synccatalog{
                         'syncdata_last_date' => $date_now,
                     );
 
-                    $this->connection->update($this->saleslayer_syncdata_flag_table, $values_to_update, 'id = '.$current_flag['id']);
+                    $this->slConnection->slDBUpdate(
+                        $this->slConnection->getTable($this->saleslayer_syncdata_flag_table),
+                        $values_to_update,
+                        'id = '.$current_flag['id']
+                    );
 
                 }
 
@@ -178,7 +176,15 @@ class Autosynccron extends Synccatalog{
 
         }
 
-        $running_crons = $this->connection->fetchAll(" SELECT * FROM ".$this->cron_schedule_table." WHERE job_code = 'Saleslayer_Synccatalog_Syncdatacron' AND status = 'running' AND executed_at IS NOT NULL");
+        $running_crons = $this->connection->fetchAll(
+            $this->connection->select()
+                ->from(
+                   $this->slConnection->getTable('cron_schedule')
+                )
+                ->where("job_code = 'Saleslayer_Synccatalog_Syncdatacron'")
+                ->where("status ='running'")
+                ->where('executed_at IS NOT NULL')
+        );
         
         foreach ($running_crons as $keyRC => $running_cron) {
             
@@ -225,7 +231,10 @@ class Autosynccron extends Synccatalog{
         $this->sl_time_ini_auto_sync_process = microtime(1);
         
         $items_processing = $this->connection->fetchOne(
-            $this->connection->select()->from($this->saleslayer_syncdata_table, [new Expr('COUNT(*)')])
+            $this->connection->select()->from(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                [new Expr('COUNT(*)')]
+            )
         );
         
         if (isset($items_processing) && $items_processing > 0){

@@ -1,7 +1,7 @@
 <?php
 namespace Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Edit\Tab;
 
-// use \Magento\Catalog\Model\Category as categoryModel;
+use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 
 /**
  * Synccatalog page edit form Parameters tab
@@ -9,32 +9,12 @@ namespace Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Edit\Tab;
 class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \Magento\Backend\Block\Widget\Tab\TabInterface
 {
 
-    /**
-     * @var \Magento\Catalog\Model\Category
-     */
     protected $categoryModel;
-    /**
-     * @var \Magento\Eav\Model\Entity\Attribute\Source\Boolean ;
-     */
     protected $booleanSource;
-    /**
-     * @var \Magento\Catalog\Model\Category\Attribute\Source\Layout ;
-     */
     protected $layoutSource;
-    /**
-     * @var \Magento\Eav\Model\Config ;
-     */
     protected $eavConfig;
-    /**
-     * @var \Magento\Framework\App\DeploymentConfig ;
-     */
-    protected $deploymentConfig;
-    /**
-     * @var \Magento\Framework\App\ResourceConnection ;
-     */
     protected $resourceConnection;
-    protected $tablePrefix                          = null;
-    protected $mg_version;
+    protected $slConnection;
 
     /**
      * @param \Magento\Backend\Block\Template\Context $context
@@ -42,11 +22,10 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
      * @param \Magento\Framework\Data\FormFactory $formFactory
      * @param \Magento\Catalog\Model\Category $categoryModel
      * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Framework\App\DeploymentConfig $deploymentConfig
      * @param \Magento\Framework\App\ResourceConnection $resourceConnection
-     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
      * @param \Magento\Eav\Model\Entity\Attribute\Source\Boolean $booleanSource
      * @param \Magento\Catalog\Model\Category\Attribute\Source\Layout $layoutSource
+     * @param Saleslayer\Synccatalog\Helper\slConnection
      * @param array $data
      */
     public function __construct(
@@ -55,21 +34,19 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
         \Magento\Framework\Data\FormFactory $formFactory,
         \Magento\Catalog\Model\Category $categoryModel,
         \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Framework\App\DeploymentConfig $deploymentConfig,
         \Magento\Framework\App\ResourceConnection $resourceConnection,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         \Magento\Eav\Model\Entity\Attribute\Source\Boolean $booleanSource,
         \Magento\Catalog\Model\Category\Attribute\Source\Layout $layoutSource,
+        slConnection $slConnection,
         array $data = []
     ) {
         parent::__construct($context, $registry, $formFactory, $data);
         $this->categoryModel        = $categoryModel;
         $this->eavConfig            = $eavConfig;
-        $this->deploymentConfig     = $deploymentConfig;
         $this->resourceConnection   = $resourceConnection;
-        $this->mg_version           = $productMetadata->getVersion();
         $this->booleanSource        = $booleanSource;
         $this->layoutSource         = $layoutSource;
+        $this->slConnection         = $slConnection;
     }
 
     /**
@@ -207,12 +184,12 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
             return $root_categories;
         }
 
-        $category_table = $this->getTable('catalog_category_entity');
-        $category_name_table = $this->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
         
         if (!is_null($category_name_table)){
 
-            if (version_compare($this->mg_version, '2.3.0') < 0) {
+            if (version_compare($this->slConnection->mg_version, '2.3.0') < 0) {
             
                 $key_parent_id = \Magento\Catalog\Model\Category::KEY_PARENT_ID;
 
@@ -256,7 +233,7 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    $this->getTable('eav_attribute'),
+                    $this->slConnection->getTable('eav_attribute'),
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE,
@@ -274,50 +251,6 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
         }
 
         return $attribute;
-    }
-
-    /**
-     * Function to get table name with prefix.
-     * @param string $tableName               table to search
-     * @return string                         table in database with prefix
-     */
-    private function getTable($tableName){
-        
-        $tableNameReturn = $this->connection->getTableName($tableName);
-
-        if ($this->connection->isTableExists($tableNameReturn)){
-
-            $tablePrefix = $this->getTablePrefix();
-
-            if ($tablePrefix && strpos($tableNameReturn, $tablePrefix) !== 0) {
-
-                $tableNameReturn = $tablePrefix . $tableNameReturn;
-
-            }
-
-            return $tableNameReturn;
-
-        }
-
-        return null;
-
-    }
-
-    /**
-     * Function to get table prefix
-     * @return string                        configuration table prefix
-     */
-    private function getTablePrefix(){
-
-        if (is_null($this->tablePrefix)) {
-                
-            $this->tablePrefix = (string)$this->deploymentConfig->get(
-                \Magento\Framework\Config\ConfigOptionsListConstants::CONFIG_PATH_DB_PREFIX
-            );
-        
-        }
-        
-        return $this->tablePrefix;
-    }
+    }  
 
 }

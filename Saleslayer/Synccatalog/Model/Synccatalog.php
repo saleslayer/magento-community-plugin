@@ -11,6 +11,7 @@ use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
 use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
+use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
@@ -29,20 +30,18 @@ use Zend_Db_Expr as Expr;
 use \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
 use \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
 use \Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
-use \Magento\Framework\App\DeploymentConfig as deploymentConfig;
 use \Magento\Eav\Model\Config as eavConfig;
 use \Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
-use \Magento\Framework\App\ProductMetadataInterface as productMetadata;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\Catalog\Model\Product\Attribute\Backend\Media\ImageEntryConverter;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
-use Magento\Framework\Config\ConfigOptionsListConstants;
 use \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use \Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 
 class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     
     protected $synccatalogDataHelper;
+    protected $slConnection;
     protected $slDebuger;
     protected $slJson;
     protected $synccatalogConfigHelper;
@@ -59,10 +58,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     protected $categoryUrlPathGenerator;
     protected $productUrlPathGenerator;
     protected $catalogInventoryConfiguration;
-    protected $deploymentConfig;
     protected $eavConfig;
     protected $typeListInterface;
-    protected $productMetadata;
     protected $countryOfManufacture;
     protected $layoutSource;
     protected $salesLayerConn;
@@ -92,7 +89,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     protected $format_type_creation = 'simple';
     protected $delete_sl_logs_since_days = 0;
 
-    protected $tablePrefix                          = null;
     protected $comp_id;
     protected $default_category_id;
     protected $avoid_stock_update;
@@ -236,8 +232,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     protected $saleslayer_syncdata_table            = 'saleslayer_synccatalog_syncdata';
     protected $saleslayer_syncdata_flag_table       = 'saleslayer_synccatalog_syncdata_flag';
     protected $sl_multiconn_table_data;
- 
-    protected $catalog_category_product_table       = 'catalog_category_product';
 
     protected $category_saleslayer_id_attribute;
     protected $category_saleslayer_id_attribute_backend_type;
@@ -276,9 +270,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     protected $tax_class_collection_loaded          = false;
     protected $tax_class_collection                 = array();
 
-    protected $mg_version                           = '';
-    protected $mg_tables_23                         = array();
-
     protected $test_sync_all                        = false;
     protected $clean_main_debug_file                = false;
 
@@ -288,6 +279,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      * @param registry                            $registry                            \Magento\Framework\Registry
      * @param SalesLayerConn                      $salesLayerConn                      Saleslayer\Synccatalog\Model\SalesLayerConn
      * @param synccatalogDataHelper               $synccatalogDataHelper               Saleslayer\Synccatalog\Helper\Data
+     * @param slConnection                        $slConnection                        Saleslayer\Synccatalog\Helper\slConnection
      * @param slDebuger                           $slDebuger                           Saleslayer\Synccatalog\Helper\slDebuger
      * @param slJson                              $slJson                              Saleslayer\Synccatalog\Helper\slJson
      * @param synccatalogConfigHelper             $synccatalogConfigHelper             Saleslayer\Synccatalog\Helper\Config
@@ -305,10 +297,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      * @param categoryUrlPathGenerator            $categoryUrlPathGenerator            \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator
      * @param productUrlPathGenerator             $productUrlPathGenerator             \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator
      * @param catalogInventoryConfiguration       $catalogInventoryConfiguration       \Magento\CatalogInventory\Model\Configuration
-     * @param deploymentConfig                    $deploymentConfig                    \Magento\Framework\App\DeploymentConfig
      * @param eavConfig                           $eavConfig                           \Magento\Eav\Model\Config
      * @param typeListInterface                   $typeListInterface                   \Magento\Framework\App\Cache\TypeListInterface
-     * @param productMetadata                     $productMetadata                     \Magento\Framework\App\ProductMetadataInterface
      * @param countryOfManufacture                $countryOfManufacture                \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture
      * @param layoutSource                        $layoutSource                        \Magento\Catalog\Model\Category\Attribute\Source\Layout
      * @param resource|null                       $resource                            \Magento\Framework\Model\ResourceModel\AbstractResource
@@ -320,6 +310,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         registry $registry,
         SalesLayerConn $salesLayerConn,
         synccatalogDataHelper $synccatalogDataHelper,
+        slConnection $slConnection,
         slDebuger $slDebuger,
         slJson $slJson,
         synccatalogConfigHelper $synccatalogConfigHelper,
@@ -337,10 +328,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         categoryUrlPathGenerator $categoryUrlPathGenerator,
         productUrlPathGenerator $productUrlPathGenerator,
         catalogInventoryConfiguration $catalogInventoryConfiguration,
-        deploymentConfig $deploymentConfig,
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
-        productMetadata $productMetadata,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         resource $resource = null,
@@ -350,6 +339,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
         $this->salesLayerConn                           = $salesLayerConn;
         $this->synccatalogDataHelper                    = $synccatalogDataHelper;
+        $this->slConnection                             = $slConnection;
         $this->slDebuger                                = $slDebuger;
         $this->slJson                                   = $slJson;
         $this->synccatalogConfigHelper                  = $synccatalogConfigHelper;
@@ -367,17 +357,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $this->categoryUrlPathGenerator                 = $categoryUrlPathGenerator;
         $this->productUrlPathGenerator                  = $productUrlPathGenerator;
         $this->catalogInventoryConfiguration            = $catalogInventoryConfiguration;
-        $this->deploymentConfig                         = $deploymentConfig;
         $this->eavConfig                                = $eavConfig;
         $this->typeListInterface                        = $typeListInterface;
-        $this->productMetadata                          = $productMetadata;
         $this->countryOfManufacture                     = $countryOfManufacture;
         $this->layoutSource                             = $layoutSource;
         $this->connection                               = $this->resourceConnection->getConnection();
-        $this->saleslayer_multiconn_table               = $this->resourceConnection->getTableName($this->saleslayer_multiconn_table);
-        $this->saleslayer_syncdata_table                = $this->resourceConnection->getTableName($this->saleslayer_syncdata_table);
-        $this->saleslayer_syncdata_flag_table           = $this->resourceConnection->getTableName($this->saleslayer_syncdata_flag_table);
-        $this->catalog_category_product_table           = $this->resourceConnection->getTableName($this->catalog_category_product_table);
 
     }
 
@@ -647,7 +631,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $all_stores = array();
 
-        $store_table = $this->getTable('store');
+        $store_table = $this->slConnection->getTable('store');
 
         if (!is_null($store_table)){
 
@@ -747,7 +731,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $this->config_notify_stock_qty          = $this->scopeConfigInterface->getValue('cataloginventory/item_options/notify_stock_qty');
         $this->config_catalog_category_flat     = $this->scopeConfigInterface->getValue('catalog/frontend/flat_catalog_category');
         $this->config_catalog_product_flat      = $this->scopeConfigInterface->getValue('catalog/frontend/flat_catalog_product');
-        $this->mg_version                       = $this->productMetadata->getVersion();
 
         $this->backorders_no                    = \Magento\CatalogInventory\Model\Stock::BACKORDERS_NO;
         $this->backorders_yes_nonotify          = \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NONOTIFY;
@@ -771,12 +754,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         }
 
         $this->config_max_sale_qty              = $this->scopeConfigInterface->getValue('cataloginventory/item_options/max_sale_qty');
-    
-        if (version_compare($this->mg_version, '2.3.0') < 0) {
-      
-            $this->mg_tables_23[] = 'inventory_source_item';
-
-        }
       
     }
 
@@ -984,7 +961,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         return $slconn;
 
-    } 
+    }
 
     /**
      * Function to store connector's data to synchronize.
@@ -1003,7 +980,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if( $items_processing = $this->isProcessing() ){
             $this->slDebuger->debug('### time_store_sync_data: ', 'timer', (microtime(1) - $time_ini_data));
-            return "There are still ".$items_processing['count']." items processing, wait until is finished and synchronize again.";
+            return "There are still ".$items_processing." items processing, wait until is finished and synchronize again.";
         }
         
         $this->slDebuger->debug("\r\n==== Store Sync Data INIT ====\r\n");
@@ -1084,20 +1061,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (!empty($this->sql_to_insert) && (count($this->sql_to_insert) >= $this->sql_to_insert_limit || $force_insert)){
 
-            $sql_to_insert = implode(',', $this->sql_to_insert);
+            $result_create = $this->slConnection->slDBInsertMultiple(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                $this->sql_to_insert,
+                'Insert syncdata SQL message'
+            );
+
+            if (!$result_create){
             
-            try{
-
-                $sql_query_to_insert = " INSERT INTO ".$this->saleslayer_syncdata_table.
-                                                 " ( sync_type, item_type, item_data, sync_params ) VALUES ".
-                                                 $sql_to_insert;
-
-                $this->connection->query($sql_query_to_insert);
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Insert syncdata SQL message: '.$e->getMessage());
-                $this->slDebuger->debug('## Error. Insert syncdata SQL query: '.$sql_query_to_insert);
+                $this->slDebuger->debug('## Error. Insert syncdata SQL items: '.print_R($this->sql_to_insert,1));
 
             }
 
@@ -1738,7 +1710,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 $store_view_id
             );
 
-            $url_rewrite_table = $this->getTable('url_rewrite');
+            $url_rewrite_table = $this->slConnection->getTable('url_rewrite');
 
             $exists = $this->connection->fetchOne(
                 $this->connection->select()
@@ -1798,20 +1770,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($rewriteId) {
             
-                try{
-                    
-                    $this->connection->update(
-                        $url_rewrite_table,
-                        ['request_path' => $requestPath],
-                        ['url_rewrite_id = ?' => $rewriteId]
-                    );
+                $result_update = $this->slConnection->slDBUpdate(
+                    $url_rewrite_table,
+                    ['request_path' => $requestPath],
+                    ['url_rewrite_id = ?' => $rewriteId],
+                    'Updating category url rewrite. Url path: '.$requestPath.' already exists on a different category'
+                );
 
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Updating category url rewrite. Url path: '.$requestPath.' already exists on a different category: '.$e->getMessage());
-                    continue;
-
-                }
+                if (!$result_update) continue;
 
             } else {
             
@@ -1825,20 +1791,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     'is_autogenerated' => 1
                 ];
 
-                try{
+                $result_create = $this->slConnection->slDBInsertOnDuplicate(
+                    $url_rewrite_table,
+                    $data,
+                    array_keys($data),
+                    'Inserting category url rewrite. Url path: '.$requestPath.' already exists on a different category'
+                );
 
-                    $this->connection->insertOnDuplicate(
-                        $url_rewrite_table,
-                        $data,
-                        array_keys($data)
-                    );
-                
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Inserting category url rewrite. Url path: '.$requestPath.' already exists on a different category: '.$e->getMessage());
-                    continue;
-
-                }
+                if (!$result_create) continue;                
 
             }
 
@@ -1894,7 +1854,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             try{
 
-                $category_table = $this->getTable('catalog_category_entity');
+                $category_table = $this->slConnection->getTable('catalog_category_entity');
                 $mg_category_core_data = $this->get_category_core_data($this->mg_category_id);
                 $mg_parent_category_path .= '/'.$mg_category_core_data['entity_id'];
                 $this->mg_category_level = $mg_category_core_data['level'];
@@ -1912,7 +1872,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     );
 
                     if (!$position) $position = 0;
-                    $this->connection->update($category_table, ['position' => $position], 'entity_id = ' . $this->mg_category_id);
+
+                    $this->slConnection->slDBUpdate(
+                        $category_table, 
+                        ['position' => $position], 
+                        'entity_id = ' . $this->mg_category_id
+                    );
 
                 }
 
@@ -1935,20 +1900,23 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         );
 
                         if (!$position) $position = 0;
-                        $this->connection->update($category_table, ['position' => $position], 'entity_id = ' . $this->mg_category_id);
+                        
+                        $this->slConnection->slDBUpdate(
+                            $category_table, 
+                            ['position' => $position], 
+                            'entity_id = ' . $this->mg_category_id
+                        );
 
                     }
 
-                    try{
+                    $result_update = $this->slConnection->slDBUpdate(
+                        $category_table, 
+                        ['path' => $mg_parent_category_path, 'parent_id' => $this->mg_parent_category_id], 
+                        'entity_id = ' . $this->mg_category_id,
+                        'Reorganizing the category'
+                    );
 
-                        $this->connection->update($category_table, ['path' => $mg_parent_category_path, 'parent_id' => $this->mg_parent_category_id], 'entity_id = ' . $this->mg_category_id);
-                        $refresh_stats = true;
-
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Reorganizing the category: '.$e->getMessage());
-
-                    }
+                    if ($result_update) $refresh_stats = true;
 
                     if ($refresh_stats){
 
@@ -1972,15 +1940,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                                     foreach ($incorrect_children_categories_path as $incorrect_children_category_path) {
                                         
-                                        try{
-
-                                            $this->connection->update($category_table, ['path' => $incorrect_children_category_path['correct_path']], 'entity_id = ' . $incorrect_children_category_path['child_id']);
-
-                                        }catch(\Exception $e){
-
-                                            $this->slDebuger->debug('## Error. Correcting category children path: '.print_R($e->getMessage(),1));
-
-                                        }
+                                        $this->slConnection->slDBUpdate(
+                                            $category_table, 
+                                            ['path' => $incorrect_children_category_path['correct_path']], 
+                                            'entity_id = ' . $incorrect_children_category_path['child_id'],
+                                            'Correcting category children path'
+                                        );
 
                                         if (!isset($parent_categories_ids_to_check[$incorrect_children_category_path['child_id']])){
 
@@ -2006,24 +1971,24 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 }
 
-                $incorrect_level_categories_sql = " SELECT LENGTH(path)-LENGTH(REPLACE(path,'/','')) AS correct_level, `level` ".
-                                                " FROM ".$category_table.
-                                                " WHERE LENGTH(path)-LENGTH(REPLACE(path,'/','')) != `level`".
-                                                " AND entity_id = ".$this->mg_parent_category_id;
-
-                $incorrect_level_parent_category = $this->connection->fetchRow($incorrect_level_categories_sql);
+                $incorrect_level_parent_category = $this->connection->fetchRow(
+                    $this->connection->select()
+                        ->from(
+                            [$category_table],
+                            ['correct_level' => new Expr("LENGTH(path) - LENGTH(REPLACE(path,'/',''))"), 'level']
+                        )
+                        ->where("LENGTH(path)-LENGTH(REPLACE(path,'/','')) != `level`")
+                        ->where('entity_id = ?', $this->mg_parent_category_id)
+                );
 
                 if (!empty($incorrect_level_parent_category)){
 
-                    try{
-
-                        $this->connection->update($category_table, ['level' => $incorrect_level_parent_category['correct_level']], 'entity_id = ' . $this->mg_parent_category_id);
-
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Correcting parent category level: '.print_R($e->getMessage(),1));
-
-                    }
+                    $this->slConnection->slDBUpdate(
+                        $category_table, 
+                        ['level' => $incorrect_level_parent_category['correct_level']], 
+                        'entity_id = ' . $this->mg_parent_category_id,
+                        'Correcting parent category level'
+                    );
 
                     $correct_category_level = $incorrect_level_parent_category['correct_level'] + 1;
 
@@ -2035,22 +2000,19 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if ($mg_category_core_data['level'] != $correct_category_level){
 
-                    try{
+                    $result_update = $this->slConnection->slDBUpdate(
+                        $category_table, 
+                        ['level' => $correct_category_level], 
+                        'entity_id = ' . $this->mg_category_id,
+                        'Correcting category level'
+                    );
 
-                        $this->connection->update($category_table, ['level' => $correct_category_level], 'entity_id = ' . $this->mg_category_id);
-                        $this->mg_category_level = $correct_category_level;
-
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Correcting category level: '.print_R($e->getMessage(),1));
-
-                    }
+                    if ($result_update) $this->mg_category_level = $correct_category_level;
 
                 }
             
             } catch (\Exception $e) {
 
-                
                 $this->slDebuger->debug("## Error. Updating core category ".$sl_category_name."with SL ID: ".$sl_id." path data: ".$e->getMessage());
                 return false;
 
@@ -2080,7 +2042,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         }
 
-        $category_table = $this->getTable('catalog_category_entity');
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
         
         $incorrect_children_categories_path_sql = " SELECT ch.entity_id as child_id,ch.path as old_path, CONCAT ( cp.path, '/', ch.entity_id ) as correct_path, ch.parent_id as child_parent_id, cp.entity_id parent_id ".
                                             " , cp.path as parent_path ".
@@ -2128,15 +2090,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         foreach ($incorrect_children_categories_path as $incorrect_children_category_path) {
                             
-                            try{
-
-                                $this->connection->update($category_table, ['path' => $incorrect_children_category_path['correct_path']], 'entity_id = ' . $incorrect_children_category_path['child_id']);
-
-                            }catch(\Exception $e){
-
-                                $this->slDebuger->debug('## Error. Correcting category children path: '.print_R($e->getMessage(),1));
-
-                            }
+                            $this->slConnection->slDBUpdate(
+                                $category_table, 
+                                ['path' => $incorrect_children_category_path['correct_path']], 
+                                'entity_id = ' . $incorrect_children_category_path['child_id'],
+                                'Correcting category children path'
+                            );
 
                             if (!isset($parent_categories_ids_to_check[$incorrect_children_category_path['child_id']])){
 
@@ -2173,16 +2132,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         if (!empty($incorrect_categories_children)){
 
             foreach ($incorrect_categories_children as $incorrect_category_children) {
-                
-                try{
 
-                    $this->connection->update($category_table, ['children_count' => $incorrect_category_children['correct_children_count']], 'entity_id = ' . $incorrect_category_children['entity_id']);
-
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Correcting category children: '.print_R($e->getMessage(),1));
-
-                }
+                $this->slConnection->slDBUpdate(
+                    $category_table, 
+                    ['children_count' => $incorrect_category_children['correct_children_count']], 
+                    'entity_id = ' . $incorrect_category_children['entity_id'],
+                    'Correcting category children'
+                );
 
             }
 
@@ -2198,15 +2154,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             foreach ($incorrect_level_categories as $incorrect_level_category) {
                 
-                try{
-
-                    $this->connection->update($category_table, ['level' => $incorrect_level_category['correct_level']], 'entity_id = ' . $incorrect_level_category['entity_id']);
-
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Correcting category level: '.print_R($e->getMessage(),1));
-
-                }
+                $this->slConnection->slDBUpdate(
+                    $category_table, 
+                    ['level' => $incorrect_level_category['correct_level']], 
+                    'entity_id = ' . $incorrect_level_category['entity_id'],
+                    'Correcting category level'
+                );
 
             }
 
@@ -2424,9 +2377,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_create_product = microtime(1);
 
-        $product_table = $this->getTable('catalog_product_entity');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
         $time_ini_read_table_status_create_product = microtime(1);
-        $table_status = $this->connection->showTableStatus($product_table);
+        $table_status = $this->slConnection->slDBShowTableStatus($product_table);
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_read_table_status_create_product: ', 'timer', (microtime(1) - $time_ini_read_table_status_create_product));
            
         $entity_id = $table_status['Auto_increment'];
@@ -2442,19 +2395,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_insert_create_product = microtime(1);
         
-        try{
+        $result_create = $this->slConnection->slDBInsertOnDuplicate(
+            $product_table,
+            $values,
+            array_keys($values),
+            'Creating product'
+        );    
         
-            $result_create = $this->connection->insertOnDuplicate(
-                $product_table,
-                $values,
-                array_keys($values)
-            );
-            
-        }catch(\Exception $e){
-
-            $this->slDebuger->debug('## Error. Creating product: '.print_R($e->getMessage(),1));
-
-        }
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_insert_create_product: ', 'timer', (microtime(1) - $time_ini_insert_create_product));
         
         if ($result_create){
@@ -2533,7 +2480,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     
         $mg_product_core_data = $this->get_product_core_data($item_id);
      
-        $cataloginventory_stock_item_table = $this->getTable('cataloginventory_stock_item');
+        $cataloginventory_stock_item_table = $this->slConnection->getTable('cataloginventory_stock_item');
         $stock_id = new Expr(1);
 
         $mg_existing_stock = $this->connection->fetchRow(
@@ -2703,7 +2650,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
             if (!empty($stock_data_to_update)){
 
-                $this->connection->update($cataloginventory_stock_item_table, $stock_data_to_update, 'item_id = ' . $mg_existing_stock['item_id']);
+                $this->slConnection->slDBUpdate(
+                    $cataloginventory_stock_item_table, 
+                    $stock_data_to_update, 
+                    'item_id = ' . $mg_existing_stock['item_id']
+                );
 
             }
 
@@ -2720,15 +2671,37 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             }
             
-            $query_insert = " INSERT INTO ".$cataloginventory_stock_item_table."(`product_id`,`stock_id`,`qty`,`is_in_stock`,`low_stock_date`,`stock_status_changed_auto`,`website_id`,`manage_stock`,`use_config_manage_stock`,`notify_stock_qty`,`qty_increments`,`backorders`,`use_config_backorders`,`min_sale_qty`,`use_config_min_sale_qty`,`max_sale_qty`,`use_config_max_sale_qty`) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
-            
-            $this->sl_connection_query($query_insert, array($item_id, $stock_id, $sl_qty, $is_in_stock , new Expr('NULL'), new Expr(0), new Expr($default_website_id), $manage_stock, $use_config_manage_stock, $this->config_notify_stock_qty, new Expr(1), $sl_backorders, $use_config_backorders, $sl_min_sale_qty, $use_config_min_sale_qty, $sl_max_sale_qty, $use_config_max_sale_qty));
+            $values_to_insert = [
+                'product_id' => $item_id,
+                'stock_id' => $stock_id,
+                'qty' => $sl_qty,
+                'is_in_stock' => $is_in_stock,
+                'low_stock_date' => new Expr('NULL'),
+                'stock_status_changed_auto' => new Expr(0),
+                'website_id' => new Expr($default_website_id),
+                'manage_stock' => $manage_stock,
+                'use_config_manage_stock' => $use_config_manage_stock,
+                'notify_stock_qty' => $this->config_notify_stock_qty,
+                'qty_increments' => new Expr(1),
+                'backorders' => $sl_backorders,
+                'use_config_backorders' => $use_config_backorders,
+                'min_sale_qty' => $sl_min_sale_qty,
+                'use_config_min_sale_qty' => $use_config_min_sale_qty,
+                'max_sale_qty' => $sl_max_sale_qty,
+                'use_config_max_sale_qty' => $use_config_max_sale_qty
+            ];
+
+            $this->slConnection->slDBInsertOnDuplicate(
+                $cataloginventory_stock_item_table,
+                $values_to_insert,
+                array_keys($values_to_insert)
+            );
 
         }
 
         if (!$avoid_stock_update){
 
-            $cataloginventory_stock_status_table = $this->getTable('cataloginventory_stock_status');
+            $cataloginventory_stock_status_table = $this->slConnection->getTable('cataloginventory_stock_status');
 
             $mg_existing_stock_status = $this->connection->fetchRow(
                 $this->connection->select()
@@ -2759,19 +2732,35 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if (!empty($stock_status_data_to_update)){
 
-                    $this->connection->update($cataloginventory_stock_status_table, $stock_status_data_to_update, ['product_id = ?' => $mg_existing_stock_status['product_id'], 'stock_id = ?' => $mg_existing_stock_status['stock_id'], 'website_id = ?' => $mg_existing_stock_status['website_id']]);
+                    $this->slConnection->slDBUpdate(
+                        $cataloginventory_stock_status_table, 
+                        $stock_status_data_to_update, 
+                        ['product_id = ?' => $mg_existing_stock_status['product_id'], 
+                        'stock_id = ?' => $mg_existing_stock_status['stock_id'],
+                        'website_id = ?' => $mg_existing_stock_status['website_id']]
+                    );
 
                 }
 
             }else{
 
-                $query_insert = " INSERT INTO ".$cataloginventory_stock_status_table."(`product_id`,`website_id`,`stock_id`,`qty`,`stock_status`) values (?,?,?,?,?);";
+                $values_to_insert = [
+                    'product_id' => $item_id,
+                    'website_id' => new Expr($default_website_id),
+                    'stock_id' => $stock_id,
+                    'qty' => $sl_qty,
+                    'stock_status' => $is_in_stock
+                ];
                 
-                $this->sl_connection_query($query_insert,array($item_id, new Expr($default_website_id), $stock_id, $sl_qty, $is_in_stock));
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $cataloginventory_stock_status_table,
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
-            $inventory_source_item_table = $this->getTable('inventory_source_item');
+            $inventory_source_item_table = $this->slConnection->getTable('inventory_source_item');
 
             if (!is_null($inventory_source_item_table)){
 
@@ -2802,15 +2791,28 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     if (!empty($inventory_source_item_data_to_update)){
 
-                        $this->connection->update($inventory_source_item_table, $inventory_source_item_data_to_update, 'source_item_id = ' . $mg_existing_inventory_source_item['source_item_id']);
+                        $this->slConnection->slDBUpdate(
+                            $inventory_source_item_table, 
+                            $inventory_source_item_data_to_update, 
+                            'source_item_id = ' . $mg_existing_inventory_source_item['source_item_id']
+                        );
 
                     }
 
                 }else{
 
-                    $query_insert = " INSERT INTO ".$inventory_source_item_table."(`source_code`,`sku`,`quantity`,`status`) values (?,?,?,?);";
-                    
-                    $this->sl_connection_query($query_insert,array(new Expr('default'), $mg_product_core_data['sku'], $sl_qty, $is_in_stock));
+                    $values_to_insert = [
+                        'source_code' => 'default',
+                        'sku' => $mg_product_core_data['sku'],
+                        'quantity' => $sl_qty,
+                        'status' => $is_in_stock
+                    ];
+
+                    $this->slConnection->slDBInsertOnDuplicate(
+                        $inventory_source_item_table,
+                        $values_to_insert,
+                        array_keys($values_to_insert)
+                    );
 
                 }
 
@@ -2829,8 +2831,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_product_url_rewrite = microtime(1);
 
-        $url_rewrite_table = $this->getTable('url_rewrite');
-        $catalog_url_rewrite_product_category_table = $this->getTable('catalog_url_rewrite_product_category');
+        $url_rewrite_table = $this->slConnection->getTable('url_rewrite');
+        $catalog_url_rewrite_product_category_table = $this->slConnection->getTable('catalog_url_rewrite_product_category');
 
         foreach ($store_view_ids as $store_view_id) {
             
@@ -2964,30 +2966,29 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 $metadata = $path['metadata'];
 
                 $rewriteId = $this->connection->fetchOne(
-                    $this->connection->select()->from($url_rewrite_table, ['url_rewrite_id'])->where('entity_type = ?', ProductUrlRewriteGenerator::ENTITY_TYPE)->where(
-                        'target_path = ?',
-                        $targetPath
-                    )->where('entity_id = ?', $product->getEntityId())->where('store_id = ?', $product->getStoreId())->where('is_autogenerated = ?', 1)
+                    $this->connection->select()->from(
+                        $url_rewrite_table, 
+                        ['url_rewrite_id']
+                    )
+                    ->where('entity_type = ?', ProductUrlRewriteGenerator::ENTITY_TYPE)
+                    ->where('target_path = ?', $targetPath)
+                    ->where('entity_id = ?', $product->getEntityId())
+                    ->where('store_id = ?', $product->getStoreId())
+                    ->where('is_autogenerated = ?', 1)
                 );
 
                 $time_ini_rewrite_id = microtime(1);
 
                 if ($rewriteId) {
                     
-                    try{
+                    $result_update = $this->slConnection->slDBUpdate(
+                        $url_rewrite_table,
+                        ['request_path' => $requestPath, 'metadata' => $metadata],
+                        ['url_rewrite_id = ?' => $rewriteId],
+                        'Updating product path url rewrite. Url path: '.$requestPath.' already exists on a different product path'
+                    );
 
-                        $this->connection->update(
-                            $url_rewrite_table,
-                            ['request_path' => $requestPath, 'metadata' => $metadata],
-                            ['url_rewrite_id = ?' => $rewriteId]
-                        );
-
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Updating product path url rewrite. Url path: '.$requestPath.' already exists on a different product path: '.$e->getMessage());
-                        continue;
-
-                    }
+                    if (!$result_update) continue;
 
                 } else {
 
@@ -3002,21 +3003,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         'metadata'         => $metadata,
                     ];
 
-                    try{
+                    $result_create = $this->slConnection->slDBInsertOnDuplicate(
+                        $url_rewrite_table,
+                        $data,
+                        array_keys($data),
+                        'Inserting product path url rewrite. Url path: '.$requestPath.' already exists on a different product path'
+                    );
 
-                        $this->connection->insertOnDuplicate(
-                            $url_rewrite_table,
-                            $data,
-                            array_keys($data)
-                        );
+                    if (!$result_create) continue;
                     
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Inserting product path url rewrite. Url path: '.$requestPath.' already exists on a different product path: '.$e->getMessage());
-                        continue;
-
-                    }
-
                     if ($path['category_id']) {
                       
                         $rewriteId = $this->connection->fetchOne(
@@ -3045,7 +3040,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     $time_ini_delete_path = microtime(1);
 
-                    $this->connection->delete(
+                    $this->slConnection->slDBDelete(
                         $catalog_url_rewrite_product_category_table,
                         ['url_rewrite_id = ?' => $rewriteId]
                     );
@@ -3054,20 +3049,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     $time_ini_insert_path = microtime(1);
 
-                    try{
+                    $result_create = $this->slConnection->slDBInsertOnDuplicate(
+                        $catalog_url_rewrite_product_category_table,
+                        $data,
+                        array_keys($data),
+                        'Inserting catalog product category url rewrite id'
+                    );
 
-                        $this->connection->insertOnDuplicate(
-                            $catalog_url_rewrite_product_category_table,
-                            $data,
-                            array_keys($data)
-                        );
-
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Inserting catalog product category url rewrite id: '.$e->getMessage());
-                        continue;
-
-                    }
+                    if (!$result_create) continue;
 
                     if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_insert_path: ', 'timer', (microtime(1) - $time_ini_insert_path));
 
@@ -3095,7 +3084,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_generate_url_path = microtime(1);
         
-        $url_rewrite_table = $this->getTable('url_rewrite');
+        $url_rewrite_table = $this->slConnection->getTable('url_rewrite');
 
         $requestPath = $this->productUrlPathGenerator->getUrlPathWithSuffix(
             $product,
@@ -3413,25 +3402,23 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 $images_data['existing_images_to_delete'] = $existing_images_to_delete;   
             }
 
-            try{
+            $images_data_encoded = $this->slJson->serialize($images_data);
 
-                $images_data_encoded = $this->slJson->serialize($images_data);
-
-                if ($images_data_encoded !== false){
-                    
-                    $sql_query_to_insert = " INSERT INTO ".$this->saleslayer_syncdata_table.
-                                                     " ( sync_type, item_type, item_data, sync_params ) VALUES ".
-                                                     "('update', 'product__images', '".addslashes($images_data_encoded)."', '')";
-
-                    $this->connection->query($sql_query_to_insert);
-
-                }
-
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Insert syncdata SQL query: '.$sql_query_to_insert);
-                $this->slDebuger->debug('## Error. Insert syncdata SQL message: '.$e->getMessage());
+            if ($images_data_encoded !== false){
+            
+                $product_images_to_insert = [
+                    'sync_type'     => 'update',
+                    'item_type'     => 'product__images',
+                    'item_data'     => $images_data_encoded,
+                    'sync_params'   => ''
+                ];
+                
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                    $product_images_to_insert, 
+                    array_keys($product_images_to_insert),
+                    'Insert syncdata SQL message'
+                );
 
             }
 
@@ -3604,17 +3591,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         if ($mg_item_disabled != 0){
 
             $time_ini_update_disabled = microtime(1);
-            $catalog_product_entity_media_gallery_value_table = $this->getTable('catalog_product_entity_media_gallery_value');
+            $catalog_product_entity_media_gallery_value_table = $this->slConnection->getTable('catalog_product_entity_media_gallery_value');
 
-            try{
-
-                $this->connection->update($catalog_product_entity_media_gallery_value_table, ['disabled' => 0], 'value_id = ' . $mg_item_id);
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Enabling image item with ID: '.$mg_item_id.', message: '.$e->getMessage());
-
-            }
+            $this->slConnection->slDBUpdate(
+                $catalog_product_entity_media_gallery_value_table, 
+                ['disabled' => 0], 
+                'value_id = ' . $mg_item_id,
+                'Enabling image item with ID: '.$mg_item_id.', message'
+            );
 
             if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_item_update_disabled: ', 'timer', (microtime(1) - $time_ini_update_disabled));
           
@@ -3671,37 +3655,29 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
  
                 $this->slDebuger->debug(" Deleting image: ".$image_to_delete['filename']);
 
-                $galleryEntityTable = $this->getTable('catalog_product_entity_media_gallery_value_to_entity');
+                $galleryEntityTable = $this->slConnection->getTable('catalog_product_entity_media_gallery_value_to_entity');
                 
-                try{
-
-                    $query_delete = " DELETE FROM ".$galleryEntityTable." WHERE value_id = ".$id_image_to_delete." AND entity_id = ".$image_to_delete['entity_id'];
-                    $this->sl_connection_query($query_delete);
+                $this->slConnection->slDBDelete(
+                    $galleryEntityTable,
+                    ['value_id = ?' => $id_image_to_delete, 'entity_id = ?' => $image_to_delete['entity_id']],
+                    'Deleting image from galleryEntityTable'
+                );
                 
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Deleting image from galleryEntityTable: '.$e->getMessage());
-
-                }
-
-                $catalog_product_entity_media_gallery_value_table = $this->getTable('catalog_product_entity_media_gallery_value');
+                $catalog_product_entity_media_gallery_value_table = $this->slConnection->getTable('catalog_product_entity_media_gallery_value');
                 
-                try{
+                $this->slConnection->slDBDelete(
+                    $catalog_product_entity_media_gallery_value_table,
+                    ['value_id = ?' => $id_image_to_delete, 'entity_id = ?' => $image_to_delete['entity_id']],
+                    'Deleting image from catalog_product_entity_media_gallery_value_table'
+                );
 
-                    $query_delete = " DELETE FROM ".$catalog_product_entity_media_gallery_value_table." WHERE value_id = ".$id_image_to_delete." AND entity_id = ".$image_to_delete['entity_id'];
-                    $this->sl_connection_query($query_delete);
-                    
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Deleting image from catalog_product_entity_media_gallery_value_table: '.$e->getMessage());
-
-                }
-
-                $galleryTable = $this->getTable('catalog_product_entity_media_gallery');
+                $galleryTable = $this->slConnection->getTable('catalog_product_entity_media_gallery');
 
                 $is_in_other_items = $this->connection->fetchOne(
                     $this->connection->select()
-                    ->from($galleryEntityTable, [new Expr('COUNT(*)')])
+                    ->from($galleryEntityTable, 
+                        [new Expr('COUNT(*)')]
+                    )
                     ->where('entity_id != ?', $item_id)
                     ->where('value_id = ?', $id_image_to_delete)
                 );
@@ -3712,16 +3688,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 
                 }else{
 
-                    try{
-
-                        $query_delete = " DELETE FROM ".$galleryTable." WHERE value_id = ".$id_image_to_delete;
-                        $this->sl_connection_query($query_delete);
-                    
-                    }catch(\Exception $e){
-
-                        $this->slDebuger->debug('## Error. Deleting image from galleryTable: '.$e->getMessage());
-
-                    }
+                    $this->slConnection->slDBDelete(
+                        $galleryTable,
+                        ['value_id = ?' => $id_image_to_delete],
+                        'Deleting image from galleryTable'
+                    );
 
                     $image_full_path = $this->product_path_base.$image_to_delete['filename'];
 
@@ -3851,16 +3822,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $existing_image = false;
         $image_value_id = $img_filename = '';
 
-        $galleryTable = $this->getTable('catalog_product_entity_media_gallery');
-        $galleryEntityTable = $this->getTable('catalog_product_entity_media_gallery_value_to_entity');
-        $galleryValueTable = $this->getTable('catalog_product_entity_media_gallery_value');
+        $galleryTable = $this->slConnection->getTable('catalog_product_entity_media_gallery');
+        $galleryEntityTable = $this->slConnection->getTable('catalog_product_entity_media_gallery_value_to_entity');
+        $galleryValueTable = $this->slConnection->getTable('catalog_product_entity_media_gallery_value');
 
         $image_name_to_check = '/'.substr($image_filename, 0,1).'/'.substr($image_filename, 1,1).'/'.$image_filename;
 
         $existing_image_id = $this->connection->fetchOne(
             $this->connection->select()
                 ->from(
-                   [$galleryTable],
+                    [$galleryTable],
                     ['value_id']
                 )
                 ->where('value' . ' = ?', $image_name_to_check)
@@ -3898,7 +3869,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 $process_image = false;
                 $img_filename = $image_filename;
 
-                $this->connection->update($galleryTable, ['value' => $image_name_to_check], 'value_id = ' . $existing_image_id);
+                $this->slConnection->slDBUpdate(
+                    $galleryTable, 
+                    ['value' => $image_name_to_check], 
+                    'value_id = ' . $existing_image_id
+                );
 
             }
 
@@ -3951,7 +3926,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         if (!$existing_image){
 
             $image_value_id = $this->connection->fetchOne(
-                $this->connection->select()->from($galleryTable, [new Expr('MAX(`value_id`) + 1')])
+                $this->connection->select()
+                    ->from(
+                        $galleryTable, 
+                        [new Expr('MAX(`value_id`) + 1')]
+                    )
             );
 
             if (!$image_value_id) $image_value_id = 1;
@@ -3966,14 +3945,18 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 'disabled'          => 0,
             ];
             
-            $this->connection->insertOnDuplicate($galleryTable, $gallery_table_data, array_keys($gallery_table_data));
+            $this->slConnection->slDBInsertOnDuplicate(
+                $galleryTable, 
+                $gallery_table_data, 
+                array_keys($gallery_table_data)
+            );
             
         }
 
         $position = $this->connection->fetchOne(
             $this->connection->select()
                 ->from(
-                   [$galleryValueTable],
+                    [$galleryValueTable],
                     [new Expr('MAX(`position`) + 1')]
                 )
                 ->where('entity_id' . ' = ?', $entity_id)
@@ -3981,7 +3964,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         
         if (!$position) $position = 1;
 
-        $table_status = $this->connection->showTableStatus($galleryValueTable);
+        $table_status = $this->slConnection->slDBShowTableStatus($galleryValueTable);
         $record_id = $table_status['Auto_increment'];
 
         $gallery_value_table_data = [
@@ -3994,14 +3977,22 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             'record_id'         => $record_id
         ];
 
-        $this->connection->insertOnDuplicate($galleryValueTable, $gallery_value_table_data, array_keys($gallery_value_table_data));
+        $this->slConnection->slDBInsertOnDuplicate(
+            $galleryValueTable, 
+            $gallery_value_table_data, 
+            array_keys($gallery_value_table_data)
+        );
 
         $gallery_entity_table_data = [
             'value_id'          => $image_value_id,
             'entity_id'         => $entity_id,
         ];
 
-        $this->connection->insertOnDuplicate($galleryEntityTable, $gallery_entity_table_data, array_keys($gallery_entity_table_data));
+        $this->slConnection->slDBInsertOnDuplicate(
+            $galleryEntityTable, 
+            $gallery_entity_table_data, 
+            array_keys($gallery_entity_table_data)
+        );
         
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_set_image_data: ', 'timer', (microtime(1) - $time_ini_set_image_data));
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_save_image_total: ', 'timer', (microtime(1) - $time_ini_save_image_total));
@@ -4018,13 +4009,19 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_clean_associated_product = microtime(1);
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $catalog_product_link_table = $this->getTable('catalog_product_link');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $catalog_product_link_table = $this->slConnection->getTable('catalog_product_link');
 
-        $query_delete = " DELETE FROM ".$catalog_product_link_table." WHERE product_id = ".$this->mg_product_id." AND link_type_id = ".$this->product_link_type_grouped_db;
-        $this->sl_connection_query($query_delete);
+        $this->slConnection->slDBDelete(
+            $catalog_product_link_table,
+            ['product_id = ?' => $this->mg_product_id, 'link_type_id = ?' => $this->product_link_type_grouped_db]
+        );
 
-        $this->connection->update($product_table, ['type_id' => $this->product_type_simple], 'entity_id = ' . $this->mg_product_id);
+        $this->slConnection->slDBUpdate(
+            $product_table, 
+            ['type_id' => $this->product_type_simple], 
+            'entity_id = ' . $this->mg_product_id
+        );
 
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_clean_associated_product: ', 'timer', (microtime(1) - $time_ini_clean_associated_product));
 
@@ -4037,9 +4034,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     */
     public function sync_stored_product_links_db($all_linked_product_data){
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $product_link_table = $this->getTable('catalog_product_link');
-        $product_link_attribute_table = $this->getTable('catalog_product_link_attribute');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $product_link_table = $this->slConnection->getTable('catalog_product_link');
+        $product_link_attribute_table = $this->slConnection->getTable('catalog_product_link_attribute');
         
         $product_link_attributes_data = $this->connection->fetchAll(
             $this->connection->select()
@@ -4054,7 +4051,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             foreach ($product_link_attributes_data as $product_link_attribute_data) {
                 
-                $link_table = $this->getTable('catalog_product_link_attribute_' . $product_link_attribute_data['data_type']);
+                $link_table = $this->slConnection->getTable('catalog_product_link_attribute_' . $product_link_attribute_data['data_type']);
 
                 if (!is_null($link_table)){
 
@@ -4556,8 +4553,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function create_format_db($product_id, $format_id, $sl_sku = null) {
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $table_status = $this->connection->showTableStatus($product_table);
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $table_status = $this->slConnection->slDBShowTableStatus($product_table);
         $entity_id = $table_status['Auto_increment'];
 
         if (!in_array($this->format_type_creation, array($this->product_type_simple, $this->product_type_virtual))){
@@ -4575,7 +4572,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             'required_options' => 0
         ];
 
-        $result_create = $this->connection->insertOnDuplicate(
+        $result_create = $this->slConnection->slDBInsertOnDuplicate(
             $product_table,
             $values,
             array_keys($values)
@@ -4618,7 +4615,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (!is_null($this->mg_format_id)){
 
-            $product_table = $this->getTable('catalog_product_entity');
+            $product_table = $this->slConnection->getTable('catalog_product_entity');
             $mg_format_core_data = $this->get_product_core_data($this->mg_format_id);
             
             $mg_format_data_to_update = array();
@@ -4639,19 +4636,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!empty($mg_format_data_to_update)){
 
-                try{
-
-                    $this->connection->update($product_table, $mg_format_data_to_update, 'entity_id = ' . $this->mg_format_id);
-
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Updating product format core data: '.$e->getMessage());
-
-                }
+                $this->slConnection->slDBUpdate(
+                    $product_table, 
+                    $mg_format_data_to_update, 
+                    'entity_id = ' . $this->mg_format_id,
+                    'Updating product format core data'
+                );
 
             }
 
-            $catalog_product_website_table = $this->getTable('catalog_product_website');
+            $catalog_product_website_table = $this->slConnection->getTable('catalog_product_website');
 
             $sl_website_ids = array(1);
             if (!empty($this->website_ids)){ $sl_website_ids = $this->website_ids; }
@@ -4676,8 +4670,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     }else{
                         
-                        $query_delete = " DELETE FROM ".$catalog_product_website_table." WHERE product_id = ".$this->mg_format_id." AND website_id = ".$mg_format_website_id['website_id'];
-                        $this->sl_connection_query($query_delete);
+                        $this->slConnection->slDBDelete(
+                            $catalog_product_website_table,
+                            ['product_id = ?' => $this->mg_format_id, 'website_id = ?' => $mg_format_website_id['website_id']]
+                        );
 
                     }
 
@@ -4689,8 +4685,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         
                 foreach ($sl_website_ids as $sl_website_id) {
                     
-                    $query_insert = " INSERT INTO ".$catalog_product_website_table."(`product_id`,`website_id`) values (?,?);";
-                    $this->sl_connection_query($query_insert,array($this->mg_format_id, $sl_website_id));
+                    $values_to_insert = [
+                        'product_id' => $this->mg_format_id,
+                        'website_id' => $sl_website_id
+                    ];
+
+                    $this->slConnection->slDBInsertOnDuplicate(
+                        $catalog_product_website_table,
+                        $values_to_insert,
+                        array_keys($values_to_insert)
+                    );
 
                 }
 
@@ -4767,9 +4771,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     if ($new_connectors_data !== false){
 
-                        $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors = ? WHERE id = ? ";
-
-                        $this->sl_connection_query($query_update, array($new_connectors_data, $this->sl_multiconn_table_data['format'][$sl_id]['id']));
+                        $this->slConnection->slDBUpdate(
+                            $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                            ['sl_connectors' => $new_connectors_data],
+                            ['id = ?' => $this->sl_multiconn_table_data['format'][$sl_id]['id']]
+                        );
 
                     }
                     
@@ -4785,9 +4791,18 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if ($connectors_data !== false){
 
-                    $query_insert = " INSERT INTO ".$this->saleslayer_multiconn_table."(`item_type`,`sl_id`,`sl_comp_id`,`sl_connectors`) values ( ? , ? , ? , ? );";
+                    $values_to_insert = [
+                        'item_type' => 'format',
+                        'sl_id' => $sl_id,
+                        'sl_comp_id' => $this->comp_id,
+                        'sl_connectors' => $connectors_data
+                    ];
 
-                    $this->sl_connection_query($query_insert, array('format', $sl_id, $this->comp_id, $connectors_data));
+                    $this->slConnection->slDBInsertOnDuplicate(
+                        $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                        $values_to_insert,
+                        array_keys($values_to_insert)
+                    );
 
                 }
 
@@ -5127,11 +5142,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $format_parent_product_attribute_ids = array();
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $catalog_product_relation_table = $this->getTable('catalog_product_relation');
-        $catalog_product_super_link_table = $this->getTable('catalog_product_super_link');
-        $catalog_product_super_attribute_table = $this->getTable('catalog_product_super_attribute');
-        $catalog_product_super_attribute_label_table = $this->getTable('catalog_product_super_attribute_label');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $catalog_product_relation_table = $this->slConnection->getTable('catalog_product_relation');
+        $catalog_product_super_link_table = $this->slConnection->getTable('catalog_product_super_link');
+        $catalog_product_super_attribute_table = $this->slConnection->getTable('catalog_product_super_attribute');
+        $catalog_product_super_attribute_label_table = $this->slConnection->getTable('catalog_product_super_attribute_label');
 
         if (isset($format['parent_product_attributes_ids']) && !empty($format['parent_product_attributes_ids'])){
 
@@ -5177,8 +5192,17 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     if (!$position) $position = 0;
 
-                    $query_insert = " INSERT INTO ".$catalog_product_super_attribute_table."(`product_id`,`attribute_id`,`position`) values (?,?,?);";
-                    $this->sl_connection_query($query_insert,array($this->mg_product_id, $format_parent_product_attribute_id, $position));
+                    $values_to_insert = [
+                        'product_id' => $this->mg_product_id,
+                        'attribute_id' => $format_parent_product_attribute_id,
+                        'position' => $position
+                    ];
+
+                    $this->slConnection->slDBInsertOnDuplicate(
+                        $catalog_product_super_attribute_table,
+                        $values_to_insert,
+                        array_keys($values_to_insert)
+                    );
 
                     $product_super_attribute_id = $this->connection->fetchOne(
                         $this->connection->select()
@@ -5206,14 +5230,28 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         if ($product_super_attribute_label_data['value'] != $attribute[\Magento\Eav\Api\Data\AttributeInterface::FRONTEND_LABEL]){
 
-                            $this->connection->update($catalog_product_super_attribute_label_table, ['value' => $attribute[\Magento\Eav\Api\Data\AttributeInterface::FRONTEND_LABEL]], 'value_id = ' . $product_super_attribute_label_data['value_id']);
+                            $this->slConnection->slDBUpdate(
+                                $catalog_product_super_attribute_label_table, 
+                                ['value' => $attribute[\Magento\Eav\Api\Data\AttributeInterface::FRONTEND_LABEL]], 
+                                'value_id = ' . $product_super_attribute_label_data['value_id']
+                            );
 
                         }
 
                     }else{
 
-                        $query_insert = " INSERT INTO ".$catalog_product_super_attribute_label_table."(`product_super_attribute_id`,`store_id`,`use_default`,`value`) values (?,?,?,?);";
-                        $this->sl_connection_query($query_insert,array($product_super_attribute_id, 0, 0, $attribute[\Magento\Eav\Api\Data\AttributeInterface::FRONTEND_LABEL]));
+                        $values_to_insert = [
+                            'product_super_attribute_id' => $product_super_attribute_id,
+                            'store_id' => 0,
+                            'use_default' => 0,
+                            'value' => $attribute[\Magento\Eav\Api\Data\AttributeInterface::FRONTEND_LABEL]
+                        ];
+
+                        $this->slConnection->slDBInsertOnDuplicate(
+                            $catalog_product_super_attribute_label_table,
+                            $values_to_insert,
+                            array_keys($values_to_insert)
+                        );
 
                     }
 
@@ -5235,12 +5273,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 foreach ($mg_product_super_attributes as $mg_product_super_attribute) {
                     
-                    $this->connection->delete(
+                    $this->slConnection->slDBDelete(
                         $catalog_product_super_attribute_table,
                         ['product_super_attribute_id = ?' => $mg_product_super_attribute['product_super_attribute_id']]
                     );
                        
-                    $this->connection->delete(
+                    $this->slConnection->slDBDelete(
                         $catalog_product_super_attribute_label_table,
                         ['product_super_attribute_id = ?' => $mg_product_super_attribute['product_super_attribute_id']]
                     );
@@ -5253,13 +5291,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (empty($format_parent_product_attribute_ids)){
 
-            $this->connection->delete(
+            $this->slConnection->slDBDelete(
                 $catalog_product_relation_table,
                 ['parent_id = ?' => $this->mg_product_id]
             );
 
             //eliminamos super_links
-            $this->connection->delete(
+            $this->slConnection->slDBDelete(
                 $catalog_product_super_link_table,
                 ['parent_id = ?' => $this->mg_product_id]
             );
@@ -5280,12 +5318,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             }else{
 
-                $this->connection->delete(
+                $this->slConnection->slDBDelete(
                     $catalog_product_super_attribute_table,
                     ['product_id = ?' => $this->mg_product_id]
                 );
                    
-                $this->connection->delete(
+                $this->slConnection->slDBDelete(
                     $catalog_product_super_attribute_label_table,
                     ['product_super_attribute_id IN ('.$product_super_attribute_ids_filter.')']
                 );
@@ -5293,7 +5331,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             }
 
             //cambiamos producto a simple
-            $this->connection->update($product_table, array('type_id' => $this->product_type_simple, 'has_options' => 0, 'required_options' => 0), 'entity_id = ' . $this->mg_product_id);
+            $this->slConnection->slDBUpdate(
+                $product_table, 
+                ['type_id' => $this->product_type_simple, 'has_options' => 0, 'required_options' => 0], 
+                'entity_id = ' . $this->mg_product_id
+            );
+
             $this->update_item_stock($this->mg_product_id, array('sl_qty' => ''));
             
 
@@ -5304,7 +5347,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($parent_product_data['type_id'] != $this->product_type_configurable || $parent_product_data['has_options'] != 1 || $parent_product_data['required_options'] != 1){
 
-                $this->connection->update($product_table, array('type_id' => $this->product_type_configurable, 'has_options' => 1, 'required_options' => 1), 'entity_id = ' . $this->mg_product_id);
+                $this->slConnection->slDBUpdate(
+                    $product_table, 
+                    ['type_id' => $this->product_type_configurable, 'has_options' => 1, 'required_options' => 1], 
+                    'entity_id = ' . $this->mg_product_id
+                );
+
                 $this->update_item_stock($this->mg_product_id, array('sl_qty' => ''));
     
             }
@@ -5319,8 +5367,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($relation_exist == 0){
 
-                $query_insert = " INSERT INTO ".$catalog_product_relation_table."(`parent_id`,`child_id`) values (?,?);";
-                $this->sl_connection_query($query_insert,array($this->mg_product_id, $this->mg_format_id));
+                $values_to_insert = [
+                    'parent_id' => $this->mg_product_id,
+                    'child_id' => $this->mg_format_id
+                ];
+
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $catalog_product_relation_table,
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
@@ -5334,8 +5390,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($super_link_exist == 0){
 
-                $query_insert = " INSERT INTO ".$catalog_product_super_link_table."(`parent_id`,`product_id`) values (?,?);";
-                $this->sl_connection_query($query_insert,array($this->mg_product_id, $this->mg_format_id));
+                $values_to_insert = [
+                    'parent_id' => $this->mg_product_id,
+                    'product_id' => $this->mg_format_id
+                ];
+
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $catalog_product_super_link_table,
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
@@ -5525,9 +5589,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function find_saleslayer_product_id_db($saleslayer_id, $store_view_id = 0) {
 
-        $product_saleslayer_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
-        $product_saleslayer_comp_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
-        $product_saleslayer_format_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
+        $product_saleslayer_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
+        $product_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
+        $product_saleslayer_format_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
 
         $products_data = $this->connection->fetchAll(
             $this->connection->select()
@@ -5630,9 +5694,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function find_saleslayer_format_id_db($saleslayer_id = null, $saleslayer_format_id, $store_view_id = 0) {
 
-        $product_saleslayer_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
-        $product_saleslayer_comp_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
-        $product_saleslayer_format_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
+        $product_saleslayer_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
+        $product_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
+        $product_saleslayer_format_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
 
         $formats_data = $this->connection->fetchAll(
             $this->connection->select()
@@ -5743,10 +5807,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function check_duplicated_sku_db($type, $sl_sku, $saleslayer_id, $saleslayer_format_id = 0, $store_view_id = 0){
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $product_saleslayer_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
-        $product_saleslayer_comp_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
-        $product_saleslayer_format_id_table = $this->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $product_saleslayer_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_id_attribute_backend_type);
+        $product_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_comp_id_attribute_backend_type);
+        $product_saleslayer_format_id_table = $this->slConnection->getTable('catalog_product_entity_' . $this->product_saleslayer_format_id_attribute_backend_type);
 
         $product_data = $this->connection->fetchRow(
             $this->connection->select()
@@ -5876,9 +5940,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         if (empty($this->sl_multiconn_table_data['category'][$sl_id]['sl_connectors'])){
 
-                            $query_delete = " DELETE FROM ".$this->saleslayer_multiconn_table." WHERE id = ? ";
-
-                            $this->sl_connection_query($query_delete, array($this->sl_multiconn_table_data['category'][$sl_id]['id']));
+                            $this->slConnection->slDBDelete(
+                                $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                ['id = ?' => array($this->sl_multiconn_table_data['category'][$sl_id]['id'])]
+                            );
 
                         }else{
 
@@ -5886,9 +5951,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             if ($new_connectors_data !== false){
 
-                                $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors = ?  WHERE id = ? ";
-
-                                $this->sl_connection_query($query_update, array($new_connectors_data, $this->sl_multiconn_table_data['category'][$sl_id]['id']));
+                                $this->slConnection->slDBUpdate(
+                                    $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                    ['sl_connectors' => $new_connectors_data],
+                                    ['id = ?' => $this->sl_multiconn_table_data['category'][$sl_id]['id']]
+                                );
 
                             }
 
@@ -5958,8 +6025,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         return 'item_deleted';
                     }
 
-                    $category_table = $this->getTable('catalog_category_entity');
-                    $category_is_active_table = $this->getTable('catalog_category_entity_' . $is_active_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+                    $category_table = $this->slConnection->getTable('catalog_category_entity');
+                    $category_is_active_table = $this->slConnection->getTable('catalog_category_entity_' . $is_active_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
 
                     $categories_under_deleted_parent = array();
                     
@@ -6018,7 +6085,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             $new_level = $category_under_deleted_parent['level'] - 1;
                             
-                            $this->connection->update($category_table, ['path' => $new_path, 'parent_id' => $parent_id, 'position' => $position, 'level' => $new_level], 'entity_id = ' . $category_under_deleted_parent['entity_id']);
+                            $this->slConnection->slDBUpdate(
+                                $category_table, 
+                                ['path' => $new_path, 'parent_id' => $parent_id, 'position' => $position, 'level' => $new_level], 
+                                'entity_id = ' . $category_under_deleted_parent['entity_id']
+                            );
 
                         }
 
@@ -6036,15 +6107,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             foreach ($incorrect_categories_children as $incorrect_category_children) {
                                 
-                                try{
-
-                                    $this->connection->update($category_table, ['children_count' => $incorrect_category_children['correct_children_count']], 'entity_id = ' . $incorrect_category_children['entity_id']);
-
-                                }catch(\Exception $e){
-
-                                    $this->slDebuger->debug('## Error. Correcting category children: '.print_R($e->getMessage(),1));
-
-                                }
+                                $this->slConnection->slDBUpdate(
+                                    $category_table, 
+                                    ['children_count' => $incorrect_category_children['correct_children_count']], 
+                                    'entity_id = ' . $incorrect_category_children['entity_id'],
+                                    'Correcting category children'
+                                );
 
                             }
 
@@ -6105,9 +6173,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         if (empty($this->sl_multiconn_table_data['product'][$sl_id]['sl_connectors'])){
 
-                            $query_delete = " DELETE FROM ".$this->saleslayer_multiconn_table." WHERE id = ?";
-
-                            $this->sl_connection_query($query_delete, array($this->sl_multiconn_table_data['product'][$sl_id]['id']));
+                            $this->slConnection->slDBDelete(
+                                $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                ['id = ?' => array($this->sl_multiconn_table_data['product'][$sl_id]['id'])]
+                            );
 
                         }else{
 
@@ -6115,9 +6184,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             if ($new_connectors_data !== false){
 
-                                $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors = ?  WHERE id = ? ";
-
-                                $this->sl_connection_query($query_update, array($new_connectors_data, $this->sl_multiconn_table_data['product'][$sl_id]['id']));
+                                $this->slConnection->slDBUpdate(
+                                    $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                    ['sl_connectors' => $new_connectors_data],
+                                    ['id = ?' => $this->sl_multiconn_table_data['product'][$sl_id]['id']]
+                                );
 
                             }
 
@@ -6216,9 +6287,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         if (empty($this->sl_multiconn_table_data['format'][$sl_id]['sl_connectors'])){
 
-                            $query_delete = " DELETE FROM ".$this->saleslayer_multiconn_table." WHERE id = ?";
-
-                            $this->sl_connection_query($query_delete, array($this->sl_multiconn_table_data['format'][$sl_id]['id']));
+                            $this->slConnection->slDBDelete(
+                                $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                ['id = ?' => array($this->sl_multiconn_table_data['format'][$sl_id]['id'])]
+                            );
 
                         }else{
 
@@ -6226,9 +6298,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             if ($new_connectors_data !== false){
 
-                                $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors =  ?  WHERE id =  ? ";
-
-                                $this->sl_connection_query($query_update, array($new_connectors_data, $this->sl_multiconn_table_data['format'][$sl_id]['id']));
+                                $this->slConnection->slDBUpdate(
+                                    $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                    ['sl_connectors' => $new_connectors_data],
+                                    ['id = ?' => $this->sl_multiconn_table_data['format'][$sl_id]['id']]
+                                );
 
                             }
 
@@ -6272,7 +6346,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     }
 
-                    $catalog_product_relation_table = $this->getTable('catalog_product_relation');
+                    $catalog_product_relation_table = $this->slConnection->getTable('catalog_product_relation');
 
                     $relation_parent_id = $this->connection->fetchOne(
                         $this->connection->select()
@@ -6291,14 +6365,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     }else{
 
                         //delete relation
-                        $this->connection->delete(
+                        $this->slConnection->slDBDelete(
                             $catalog_product_relation_table,
                             ['parent_id = ?' => $relation_parent_id, 'child_id = ?' => $mg_format_id]
                         );
 
-                        $catalog_product_super_link_table = $this->getTable('catalog_product_super_link');
+                        $catalog_product_super_link_table = $this->slConnection->getTable('catalog_product_super_link');
                         //delete link relation
-                        $this->connection->delete(
+                        $this->slConnection->slDBDelete(
                             $catalog_product_super_link_table,
                             ['parent_id = ?' => $relation_parent_id, 'product_id = ?' => $mg_format_id]
                         );
@@ -6315,7 +6389,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                         }else{
 
-                            $catalog_product_super_attribute_table = $this->getTable('catalog_product_super_attribute');
+                            $catalog_product_super_attribute_table = $this->slConnection->getTable('catalog_product_super_attribute');
 
                             $product_super_attribute_ids_filter = $this->connection->fetchOne(
                                 $this->connection->select()
@@ -6332,21 +6406,26 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             }else{
 
-                                $this->connection->delete(
+                                $this->slConnection->slDBDelete(
                                     $catalog_product_super_attribute_table,
                                     ['product_id = ?' => $relation_parent_id]
                                 );
 
-                                $catalog_product_super_attribute_label_table = $this->getTable('catalog_product_super_attribute_label');
+                                $catalog_product_super_attribute_label_table = $this->slConnection->getTable('catalog_product_super_attribute_label');
                                    
-                                $this->connection->delete(
+                                $this->slConnection->slDBDelete(
                                     $catalog_product_super_attribute_label_table,
                                     ['product_super_attribute_id IN ('.$product_super_attribute_ids_filter.')']
                                 );
 
                                 //cambiamos producto a simple
-                                $product_table = $this->getTable('catalog_product_entity');
-                                $this->connection->update($product_table, array('type_id' => $this->product_type_simple, 'has_options' => 0, 'required_options' => 0), 'entity_id = ' . $relation_parent_id);
+                                $product_table = $this->slConnection->getTable('catalog_product_entity');
+                                
+                                $this->slConnection->slDBUpdate(
+                                    $product_table, 
+                                    ['type_id' => $this->product_type_simple, 'has_options' => 0, 'required_options' => 0], 
+                                    'entity_id = ' . $relation_parent_id
+                                );
 
                                 $this->update_item_stock($relation_parent_id, array('sl_qty' => ''));
 
@@ -6448,8 +6527,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             return false;
         }
 
-        $category_table = $this->getTable('catalog_category_entity');
-        $category_name_table = $this->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
         
         if (!is_null($category_name_table)){
         
@@ -6491,7 +6570,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function get_product_id_by_sku_db($sl_sku){
 
-        $product_table = $this->getTable('catalog_product_entity');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
 
         $product_data = $this->connection->fetchRow(
             $this->connection->select()
@@ -7060,23 +7139,22 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $this->loadConfigParameters();
 
-        $items_to_process = $this->connection->query(" SELECT count(*) as count FROM ".$this->saleslayer_syncdata_table)->fetch();
+        $items_to_process = $this->connection->fetchOne(
+            $this->connection->select()->from(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                [new Expr('COUNT(*)')]
+            )
+        );
 
-        if (isset($items_to_process['count']) && $items_to_process['count'] > 0){
+        if (isset($items_to_process) && $items_to_process > 0){
 
-            $this->slDebuger->debug("Deleting ".$items_to_process['count']." items to process...");
+            $this->slDebuger->debug("Deleting ".$items_to_process." items to process...");
 
-            try{
-
-                $sql_query_delete = " DELETE FROM ".$this->saleslayer_syncdata_table;
-                $this->sl_connection_query($sql_query_delete);
-              
-            }catch(\Exception $e){
-             
-                $this->slDebuger->debug('## Error. Delete syncdata SQL message: '.$e->getMessage());
-                $this->slDebuger->debug('## Error. Delete syncdata SQL query: '.$sql_query_delete);
-
-            }
+            $this->slConnection->slDBDelete(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table)
+                [],
+                'Delete syncdata SQL message'
+            );
 
         }
 
@@ -7092,13 +7170,21 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_delete_all_unused_images = microtime(1);
         
-        $galleryTable = $this->getTable('catalog_product_entity_media_gallery');
-        $galleryEntityTable = $this->getTable('catalog_product_entity_media_gallery_value_to_entity');
+        $galleryTable = $this->slConnection->getTable('catalog_product_entity_media_gallery');
+        $galleryEntityTable = $this->slConnection->getTable('catalog_product_entity_media_gallery_value_to_entity');
 
-        $unused_images_to_delete_sql = " SELECT * FROM ".$galleryTable.
-                                            " WHERE value_id NOT IN  (SELECT DISTINCT(value_id) FROM ".$galleryEntityTable.")";
-
-        $unused_images_to_delete = $this->connection->fetchAll($unused_images_to_delete_sql);
+        $unused_images_to_delete = $this->connection->fetchAll(
+                    $this->connection->select()
+                        ->from(
+                            [$galleryTable]
+                        )
+                        ->where("value_id NOT IN (?)", $this->connection->select()
+                                                        ->from(
+                                                            $galleryEntityTable,
+                                                            [new Expr('DISTINCT(value_id)')]
+                                                        )
+                        )
+        );
 
         if (!empty($unused_images_to_delete)){
 
@@ -7110,20 +7196,22 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 $this->slDebuger->debug("Deleting ".$unused_image_to_delete['value']." ...");
         
-                try{
+                $result_delete = $this->slConnection->slDBDelete(
+                    $galleryTable,
+                    ['value_id = ?' => $unused_image_to_delete['value_id']],
+                    'Deleting unused image SQL message'
+                );
 
-                    $sql_query_delete = " DELETE FROM ".$galleryTable." WHERE value_id = ".$unused_image_to_delete['value_id'];
-                    $this->sl_connection_query($sql_query_delete);
+                if ($result_delete){
+
                     $count_deleted++;
 
-                }catch (\Exception $e){
+                }else{
 
-                    $this->slDebuger->debug('## Error. Deleting unused image SQL message: '.$e->getMessage());
-                    $this->slDebuger->debug('## Error. Deleting unused image SQL query: '.$sql_query_delete);
                     continue;
 
                 }
-
+                
                 try{
 
                     $image_path = $this->product_path_base.$unused_image_to_delete['value'];
@@ -7270,18 +7358,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         
         $attributes_tables = array('catalog_category_entity_decimal', 'catalog_category_entity_int', 'catalog_category_entity_text', 'catalog_category_entity_varchar',
                                     'catalog_product_entity_decimal', 'catalog_product_entity_int', 'catalog_product_entity_text', 'catalog_product_entity_varchar');
-
+        
         foreach ($attributes_tables as $attribute_table) {
 
-            try{
-
-                $this->connection->dropIndex($attribute_table, 'SLYR_CREDENTIALS');
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Deleting index in table '.$attribute_table.': '.$e->getMessage());
-
-            }
+            $this->slConnection->slDBDropIndex(
+                $attribute_table, 
+                'SLYR_CREDENTIALS',
+                'Deleting index in table '.$attribute_table
+            );
     
         }
 
@@ -7323,7 +7407,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     public function load_sl_multiconn_table_data(){
 
-        $sl_multiconn_table_data = $this->connection->fetchAll(" SELECT * FROM ".$this->saleslayer_multiconn_table." WHERE sl_comp_id = ".$this->comp_id);
+        $sl_multiconn_table_data = $this->connection->fetchAll(" SELECT * FROM ".$this->slConnection->getTable($this->saleslayer_multiconn_table)." WHERE sl_comp_id = ".$this->comp_id);
 
         if (!empty($sl_multiconn_table_data)){
 
@@ -7342,50 +7426,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 $this->sl_multiconn_table_data[$sl_multiconn_reg['item_type']][$sl_multiconn_reg['sl_id']] = array('id' => $sl_multiconn_reg['id'], 'sl_connectors' => $sl_multiconn_reg['sl_connectors']);
 
             }
-
-        }
-
-    }
-
-    /**
-     * Function to execute a sql and commit it.
-     * @param string $query                 sql to execute
-     * @param array $params                 parameters to attach to query
-     * @return void
-     */
-    public function sl_connection_query($query, $params = array()){
-
-        $this->connection->beginTransaction();
-        
-        try{
-
-            if (!empty($params)){
-
-                $this->connection->query($query, $params);
-
-            }else{
-
-                $this->connection->query($query);
-
-            }
-
-            $this->connection->commit();
-
-        }catch(\Exception $e) {
-            
-            $this->connection->rollBack();
-
-            if (!empty($params)){
-
-                $this->slDebuger->debug('## Error. SL SQL query: '.$query.' - params: '.print_r($params,1));
-                
-            }else{
-
-                $this->slDebuger->debug('## Error. SL SQL query: '.$query);
-                
-            }
-
-            $this->slDebuger->debug('## Error. SL SQL error message: '.$e->getMessage());
 
         }
 
@@ -7623,15 +7663,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     if ($attribute[\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL] != $this->scope_global){
 
-                        try{
-
-                            $this->connection->update($this->getTable('catalog_eav_attribute'), [\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL => $this->scope_global], \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID . ' = ' . $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID]);
-
-                        }catch(\Exception $e){
-
-                            $this->slDebuger->debug('## Error. Updating SL attribute global value: '.print_R($e->getMessage(),1));
-
-                        }
+                        $this->slConnection->slDBUpdate(
+                            $this->slConnection->getTable('catalog_eav_attribute'), 
+                            [\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL => $this->scope_global], 
+                            \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID . ' = ' . $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID],
+                            'Updating SL attribute global value'
+                        );
 
                     }
 
@@ -7660,8 +7697,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function get_category_core_data($category_id){
 
-        $category_table = $this->getTable('catalog_category_entity');
-        $identifier = $this->getColumnIdentifier($category_table);
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $identifier = $this->slConnection->getColumnIdentifier($category_table);
 
         $category_data = $this->connection->fetchRow(
             $this->connection->select()
@@ -7688,8 +7725,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function get_product_core_data($product_id){
 
-        $product_table = $this->getTable('catalog_product_entity');
-        $identifier = $this->getColumnIdentifier($product_table);
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
+        $identifier = $this->slConnection->getColumnIdentifier($product_table);
 
         $product_core_data = $this->connection->fetchRow(
             $this->connection->select()
@@ -7717,8 +7754,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function find_saleslayer_category_id_db($saleslayer_id, $store_view_id = 0) {
 
-        $category_saleslayer_id_table = $this->getTable('catalog_category_entity_' . $this->category_saleslayer_id_attribute_backend_type);
-        $category_saleslayer_comp_id_table = $this->getTable('catalog_category_entity_' . $this->category_saleslayer_comp_id_attribute_backend_type);
+        $category_saleslayer_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_id_attribute_backend_type);
+        $category_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_comp_id_attribute_backend_type);
 
         $categories_data = $this->connection->fetchAll(
             $this->connection->select()
@@ -7822,10 +7859,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             return false;
         }
 
-        $category_table = $this->getTable('catalog_category_entity');
-        $category_name_table = $this->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
-        $category_saleslayer_id_table = $this->getTable('catalog_category_entity_' . $this->category_saleslayer_id_attribute_backend_type);
-        $category_saleslayer_comp_id_table = $this->getTable('catalog_category_entity_' . $this->category_saleslayer_comp_id_attribute_backend_type);
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+        $category_saleslayer_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_id_attribute_backend_type);
+        $category_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_comp_id_attribute_backend_type);
         
         $categories_data = $this->connection->fetchAll(
             $this->connection->select()
@@ -7917,8 +7954,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function create_category_db($saleslayer_id) {
 
-        $category_table = $this->getTable('catalog_category_entity');
-        $table_status = $this->connection->showTableStatus($category_table);
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $table_status = $this->slConnection->slDBShowTableStatus($category_table);
         $entity_id = $table_status['Auto_increment'];
 
         $values = [
@@ -7928,7 +7965,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             'path' => '1/'.$entity_id,
         ];
 
-        $result_create = $this->connection->insertOnDuplicate(
+        $result_create = $this->slConnection->slDBInsertOnDuplicate(
             $category_table,
             $values,
             array_keys($values)
@@ -8005,56 +8042,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         }
 
         return true;
-    }
-
-    /**
-     * Function to get table name with prefix.
-     * @param string $tableName               table to search
-     * @return string                         table in database with prefix
-     */
-    private function getTable($tableName){
-        
-        $tableNameReturn = $this->connection->getTableName($tableName);
-
-        if ($this->connection->isTableExists($tableNameReturn)){
-
-            $tablePrefix = $this->getTablePrefix();
-
-            if ($tablePrefix && strpos($tableNameReturn, $tablePrefix) !== 0) {
-
-                $tableNameReturn = $tablePrefix . $tableNameReturn;
-
-            }
-
-            return $tableNameReturn;
-
-        }
-
-        if (!in_array($tableName, $this->mg_tables_23)){
-
-            $this->slDebuger->debug('## Error. The table '.$tableName.' does not exist.');
-
-        }
-
-        return null;
-
-    }
-
-    /**
-     * Function to get table prefix
-     * @return string                        configuration table prefix
-     */
-    private function getTablePrefix(){
-
-        if (is_null($this->tablePrefix)) {
-                
-            $this->tablePrefix = (string)$this->deploymentConfig->get(
-                ConfigOptionsListConstants::CONFIG_PATH_DB_PREFIX
-            );
-        
-        }
-        
-        return $this->tablePrefix;
     }
 
     /**
@@ -8139,7 +8126,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         }
 
-        $attribute_table = $this->getTable($entityTable);
+        $attribute_table = $this->slConnection->getTable($entityTable);
 
         if (is_null($attribute_table)){ 
 
@@ -8147,7 +8134,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         }
 
-        $identifier = $this->getColumnIdentifier($attribute_table);
+        $identifier = $this->slConnection->getColumnIdentifier($attribute_table);
 
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_identify_attribute: ', 'timer', (microtime(1) - $time_ini_identify_attribute));
 
@@ -8204,7 +8191,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     ->from(
                         $attribute_table,
                         ['value_id', 'value']
-                    )->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                    )
+                    ->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
                     ->where('store_id' . ' = ?', $storeId)
                     ->where($identifier . ' = ?', $entityId)
                     ->limit(1)
@@ -8514,13 +8502,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             }
        
-            $attribute_table = $this->getTable($entity_table);
+            $attribute_table = $this->slConnection->getTable($entity_table);
             
             if (is_null($attribute_table)){ 
                 continue; 
             }
 
-            $identifier = $this->getColumnIdentifier($attribute_table);
+            $identifier = $this->slConnection->getColumnIdentifier($attribute_table);
         
             if ($attribute[\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL] == $this->scope_global){
 
@@ -8533,7 +8521,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                             ->from(
                                 $attribute_table,
                                 ['value_id', 'value']
-                            )->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                            )
+                            ->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
                             ->where('store_id' . ' = ?', (($globalStoreId !== '') ? $globalStoreId : $storeId))
                             ->where($identifier . ' = ?', $entityId)
                             ->limit(1)
@@ -8588,13 +8577,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             }
 
             $backendType = $attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE];
-            $attribute_table = $this->getTable($entityTable . '_' . $backendType);
+            $attribute_table = $this->slConnection->getTable($entityTable . '_' . $backendType);
 
             if (is_null($attribute_table)){ 
                 continue; 
             }
 
-            $identifier = $this->getColumnIdentifier($attribute_table);
+            $identifier = $this->slConnection->getColumnIdentifier($attribute_table);
 
             if ($attribute[\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL] == $this->scope_global){
 
@@ -8614,7 +8603,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                             ->from(
                                 $attribute_table,
                                 ['value_id', 'value']
-                            )->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                            )
+                            ->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
                             ->where('store_id' . ' = ?', $storeId)
                             ->where($identifier . ' = ?', $entityId)
                             ->limit(1)
@@ -8768,11 +8758,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             }
 
             $backendType = $attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE];
-            $attribute_table = $this->getTable($entityTable. '_' . $backendType);
+            $attribute_table = $this->slConnection->getTable($entityTable. '_' . $backendType);
 
             if (is_null($attribute_table)){ continue; }
 
-            $identifier = $this->getColumnIdentifier($attribute_table);
+            $identifier = $this->slConnection->getColumnIdentifier($attribute_table);
             
             if ($attribute[\Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL] != $this->scope_global){
 
@@ -8788,7 +8778,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         ->from(
                             $attribute_table,
                             ['value_id', 'value']
-                        )->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                        )
+                        ->where('attribute_id' . ' = ?', $attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
                         ->where('store_id' . ' = ?', 0)
                         ->where($identifier . ' = ?', $entityId)
                         ->limit(1)
@@ -8812,25 +8803,24 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             }else{
 
                 $datos_value = $datos['value'];
-
+                
                 if ($datos_value != $value){
 
                     if ($value == ''){
 
-                        $query_delete = " DELETE FROM ".$attribute_table." WHERE value_id = ".$datos['value_id'];
-                        $this->sl_connection_query($query_delete);
+                        $this->slConnection->slDBDelete(
+                            $attribute_table,
+                            ['value_id = ?' => $datos['value_id']]
+                        );
 
                     }else{
 
-                        try{
-
-                            $this->connection->update($attribute_table, ['value' => $value], 'value_id = ' . $datos['value_id']);
-
-                        }catch(\Exception $e){
-
-                            $this->slDebuger->debug('## Error. Updating value: '.print_R($e->getMessage(),1));
-
-                        }
+                        $this->slConnection->slDBUpdate(
+                            $attribute_table, 
+                            ['value' => $value], 
+                            'value_id = ' . $datos['value_id'],
+                            'Updating value'
+                        );
 
                     }
 
@@ -8844,16 +8834,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             foreach ($tables_insert_values as $table_name => $table_values) {
                 
-                try{
-
-                    $this->connection->insertMultiple($table_name, $table_values);
-                
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Inserting multiple attributes values: '.$e->getMessage());
-
-                }
-
+                $this->slConnection->slDBInsertMultiple(
+                    $table_name, 
+                    $table_values,
+                    'Inserting multiple attributes values'
+                );
+            
             }
 
         }
@@ -8871,7 +8857,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    ['a' => $this->getTable('eav_attribute')],
+                    ['a' => $this->slConnection->getTable('eav_attribute')],
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE
@@ -8879,7 +8865,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 )
                 ->where(\Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID . ' = ?', $entityTypeId)
                 ->where(\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE . ' = ?', $code)
-                ->joinInner(['c' => $this->getTable('catalog_eav_attribute')],
+                ->joinInner(['c' => $this->slConnection->getTable('catalog_eav_attribute')],
                             'c.attribute_id = a.attribute_id',
                             [\Magento\Catalog\Api\Data\EavAttributeInterface::IS_WYSIWYG_ENABLED,
                             \Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL]
@@ -8907,7 +8893,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    ['ea' => $this->getTable('eav_attribute')],
+                    ['ea' => $this->slConnection->getTable('eav_attribute')],
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID,
@@ -8919,15 +8905,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID . ' = ?', $entityTypeId)
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE . ' = ?', $code)
                 ->where('eas.'.\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID . ' = ?', $attributeSetId)
-                ->joinLeft(['eas' => $this->getTable('eav_attribute_set')],
+                ->joinLeft(['eas' => $this->slConnection->getTable('eav_attribute_set')],
                             'ea.entity_type_id = eas.entity_type_id',
                             [\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID]
                     )
-                ->joinRight(['eea' => $this->getTable('eav_entity_attribute')],
+                ->joinRight(['eea' => $this->slConnection->getTable('eav_entity_attribute')],
                             'ea.entity_type_id = eea.entity_type_id AND eas.attribute_set_id = eea.attribute_set_id AND ea.attribute_id = eea.attribute_id',
                             []
                     )
-                ->joinInner(['cea' => $this->getTable('catalog_eav_attribute')],
+                ->joinInner(['cea' => $this->slConnection->getTable('catalog_eav_attribute')],
                             'ea.attribute_id = cea.attribute_id',
                             [\Magento\Catalog\Api\Data\EavAttributeInterface::IS_WYSIWYG_ENABLED,
                             \Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL]
@@ -8959,7 +8945,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    ['ea' => $this->getTable('eav_attribute')],
+                    ['ea' => $this->slConnection->getTable('eav_attribute')],
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID,
@@ -8971,15 +8957,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID . ' = ?', $entityTypeId)
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE . ' = ?', $code)
                 ->where('eas.'.\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID . ' = ?', $attributeSetId)
-                ->joinLeft(['eas' => $this->getTable('eav_attribute_set')],
+                ->joinLeft(['eas' => $this->slConnection->getTable('eav_attribute_set')],
                             'ea.entity_type_id = eas.entity_type_id',
                             [\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID]
                     )
-                ->joinRight(['eea' => $this->getTable('eav_entity_attribute')],
+                ->joinRight(['eea' => $this->slConnection->getTable('eav_entity_attribute')],
                             'ea.entity_type_id = eea.entity_type_id AND eas.attribute_set_id = eea.attribute_set_id AND ea.attribute_id = eea.attribute_id',
                             []
                     )
-                ->joinInner(['cea' => $this->getTable('catalog_eav_attribute')],
+                ->joinInner(['cea' => $this->slConnection->getTable('catalog_eav_attribute')],
                             'ea.attribute_id = cea.attribute_id',
                             [\Magento\Catalog\Api\Data\EavAttributeInterface::IS_WYSIWYG_ENABLED,
                             \Magento\Catalog\Model\ResourceModel\Eav\Attribute::KEY_IS_GLOBAL]
@@ -9062,7 +9048,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    ['ea' => $this->getTable('eav_attribute')],
+                    ['ea' => $this->slConnection->getTable('eav_attribute')],
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID,
@@ -9075,11 +9061,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID . ' = ?', $entityTypeId)
                 ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID . ' = ?', $attributeId)
                 ->where('eas.'.\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID . ' = ?', $attributeSetId)
-                ->joinLeft(['eas' => $this->getTable('eav_attribute_set')],
+                ->joinLeft(['eas' => $this->slConnection->getTable('eav_attribute_set')],
                             'ea.entity_type_id = eas.entity_type_id',
                             [\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID]
                     )
-                ->joinRight(['eea' => $this->getTable('eav_entity_attribute')],
+                ->joinRight(['eea' => $this->slConnection->getTable('eav_entity_attribute')],
                             'ea.entity_type_id = eea.entity_type_id AND eas.attribute_set_id = eea.attribute_set_id AND ea.attribute_id = eea.attribute_id',
                             []
                     )
@@ -9107,7 +9093,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    $this->getTable('eav_attribute'),
+                    $this->slConnection->getTable('eav_attribute'),
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID,
                         \Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE,
@@ -9139,7 +9125,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
                 ->from(
-                    $this->getTable('eav_attribute'),
+                    $this->slConnection->getTable('eav_attribute'),
                     [
                         \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE,
                         \Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE,
@@ -9157,22 +9143,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         }
 
         return $attribute;
-    }
-
-    /**
-     * Function to get if row id column exists
-     * @param string $table             table to check
-     * @param string $identifier        identifier to check
-     * @return string $identifier       identifier of table
-     */
-    private function getColumnIdentifier($table, $identifier = 'entity_id'){
-        
-        if ($this->connection->tableColumnExists($table, 'row_id')) {
-            $identifier = 'row_id';
-        }
-
-        return $identifier;
-
     }
 
     /**
@@ -9735,13 +9705,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function isProcessing(){
         
-        $sql_processing = $this->connection->query(" SELECT count(*) as count FROM ".$this->saleslayer_syncdata_table);
+        $items_processing = $this->connection->fetchOne(
+            $this->connection->select()->from(
+                $this->slConnection->getTable($this->saleslayer_syncdata_table), 
+                [new Expr('COUNT(*)')]
+            )
+        );
 
-        $items_processing = $sql_processing->fetch();
+        if (isset($items_processing) && $items_processing > 0){
 
-        if (isset($items_processing['count']) && $items_processing['count'] > 0){
-
-            $this->slDebuger->debug("There are still ".$items_processing['count']." items processing, wait until is finished and synchronize again.");
+            $this->slDebuger->debug("There are still ".$items_processing." items processing, wait until is finished and synchronize again.");
             
             return $items_processing;
 
@@ -9923,7 +9896,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 }
 
-
             }
 
             //We check extra fields
@@ -9957,7 +9929,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     $data_schema['products']['fields'][$product_field] = $data_schema['product_formats']['fields'][$format_field];
 
                 }
-
 
             }
 
@@ -10407,7 +10378,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
             if ($item_encoded !== false && $params_encoded !== false){
                 
-                $this->sql_to_insert[] = "('".$sync_type."', '".$item_type."', '".addslashes($item_encoded)."', '".addslashes($params_encoded)."')";
+                $this->sql_to_insert[] = ['sync_type' => $sync_type,
+                                        'item_type' => $item_type, 
+                                        'item_data' => $item_encoded,
+                                        'sync_params' => $params_encoded];
+
+                
                 $this->insert_syncdata_sql();
 
             }
@@ -10425,7 +10401,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function updateProductDB($sl_data){
 
-        $product_table = $this->getTable('catalog_product_entity');
+        $product_table = $this->slConnection->getTable('catalog_product_entity');
         $mg_product_core_data = $this->get_product_core_data($this->mg_product_id);
         
         $mg_product_data_to_update = array();
@@ -10448,17 +10424,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (!empty($mg_product_data_to_update)){
 
-            try{
-
-                $this->connection->update($product_table, $mg_product_data_to_update, 'entity_id = ' . $this->mg_product_id);
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Updating product core data: '.$e->getMessage());
-
-            }
+            $this->slConnection->slDBUpdate(
+                $product_table, 
+                $mg_product_data_to_update, 
+                'entity_id = ' . $this->mg_product_id,
+                'Updating product core data'
+            );
 
         }
+
     }
 
     /**
@@ -10467,7 +10441,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function updateProductWebsite(){
 
-        $catalog_product_website_table = $this->getTable('catalog_product_website');
+        $catalog_product_website_table = $this->slConnection->getTable('catalog_product_website');
 
         $sl_website_ids = array(1);
         if (!empty($this->website_ids)){ $sl_website_ids = $this->website_ids; }
@@ -10492,8 +10466,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 }else{
                     
-                    $query_delete = " DELETE FROM ".$catalog_product_website_table." WHERE product_id = ".$this->mg_product_id." AND website_id = ".$mg_product_website_id['website_id'];
-                    $this->sl_connection_query($query_delete);
+                    $this->slConnection->slDBDelete(
+                        $catalog_product_website_table,
+                        ['product_id = ?' => $this->mg_product_id, 'website_id = ?' => $mg_product_website_id['website_id']]
+                    );
 
                 }
 
@@ -10505,8 +10481,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     
             foreach ($sl_website_ids as $sl_website_id) {
                 
-                $query_insert = " INSERT INTO ".$catalog_product_website_table."(`product_id`,`website_id`) values (?,?);";
-                $this->sl_connection_query($query_insert,array($this->mg_product_id, $sl_website_id));
+                $values_to_insert = [
+                    'product_id' => $this->mg_product_id,
+                    'website_id' => $sl_website_id
+                ];
+
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $catalog_product_website_table,
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
@@ -10520,7 +10504,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function updateProductCategory(){
 
-        $catalog_category_product_table = $this->getTable('catalog_category_product');
+        $catalog_category_product_table = $this->slConnection->getTable('catalog_category_product');
 
         $mg_existing_category_product_ids = $this->connection->fetchAll(
             $this->connection->select()
@@ -10541,8 +10525,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 }else{
                     
-                    $query_delete = " DELETE FROM ".$catalog_category_product_table." WHERE product_id = ".$this->mg_product_id." AND category_id = ".$mg_existing_category_product_id['category_id'];
-                    $this->sl_connection_query($query_delete);
+                    $this->slConnection->slDBDelete(
+                        $catalog_category_product_table,
+                        ['product_id = ?' => $this->mg_product_id, 'category_id = ?' => $mg_existing_category_product_id['category_id']]
+                    );
 
                 }
 
@@ -10554,8 +10540,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     
             foreach ($this->sl_product_mg_category_ids as $mg_category_id) {
                 
-                $query_insert = " INSERT INTO ".$catalog_category_product_table."(`product_id`,`category_id`) values (?,?);";
-                $this->sl_connection_query($query_insert,array($this->mg_product_id, $mg_category_id));
+                $values_to_insert = [
+                    'product_id' => $this->mg_product_id,
+                    'category_id' => $mg_category_id
+                ];
+
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $catalog_category_product_table,
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
@@ -10752,16 +10746,22 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if (!empty($linked_product_data)){
 
-
             $linked_product_data_encoded = $this->slJson->serialize($linked_product_data);
 
             if ($linked_product_data_encoded !== false){
 
-                $sql_query_to_insert = " INSERT INTO ".$this->saleslayer_syncdata_table.
-                                        " ( sync_type, item_type, item_data, sync_params ) VALUES ".
-                                        " ('update', 'product_links', '".addslashes($linked_product_data_encoded)."', '')";
+                $values_to_insert = [
+                    'sync_type' => 'update',
+                    'item_type' => 'product_links',
+                    'item_data' => $linked_product_data_encoded,
+                    'sync_params' => ''
+                ];
 
-                $this->sl_connection_query($sql_query_to_insert);
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $this->slConnection->getTable($this->saleslayer_syncdata_table),
+                    $values_to_insert,
+                    array_keys($values_to_insert)
+                );
 
             }
 
@@ -10788,9 +10788,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if ($new_connectors_data !== false){
 
-                    $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors = ?  WHERE id = ? ";
-
-                    $this->sl_connection_query($query_update,array($new_connectors_data,$this->sl_multiconn_table_data['product'][$sl_id]['id']));
+                    $this->slConnection->slDBUpdate(
+                        $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                        ['sl_connectors' => $new_connectors_data],
+                        ['id = ?' => $this->sl_multiconn_table_data['product'][$sl_id]['id']]
+                    );
 
                 }
 
@@ -10804,9 +10806,18 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if ($connectors_data !== false){
 
-            $query_insert = " INSERT INTO ".$this->saleslayer_multiconn_table."(`item_type`,`sl_id`,`sl_comp_id`,`sl_connectors`) values (?,?,?,?);";
+            $values_to_insert = [
+                'item_type' => 'product',
+                'sl_id' => $sl_id,
+                'sl_comp_id' => $this->comp_id,
+                'sl_connectors' => $connectors_data
+            ];
 
-            $this->sl_connection_query($query_insert,array('product', $sl_id, $this->comp_id, $connectors_data));
+            $this->slConnection->slDBInsertOnDuplicate(
+                $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                $values_to_insert,
+                array_keys($values_to_insert)
+            );
 
         }
 
@@ -10827,16 +10838,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             foreach ($tables_insert_values as $table_name => $table_values) {
 
-                try{
-
-                    $this->connection->insertMultiple($table_name, $table_values);
+                $this->slConnection->slDBInsertMultiple(
+                    $table_name, 
+                    $table_values,
+                    'Inserting multiple attributes values'
+                );
                 
-                }catch(\Exception $e){
-
-                    $this->slDebuger->debug('## Error. Inserting multiple attributes values: '.$e->getMessage());
-
-                }
-
             }
 
             if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_insert_values: ', 'timer', (microtime(1) - $time_ini_insert_values));
@@ -10863,16 +10870,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
         if (!$field_value_matches){
 
-            try{
+            $result_update = $this->slConnection->slDBUpdate(
+                $attribute_table, 
+                ['value' => $value], 
+                'value_id = ' . $datos['value_id'],
+                'Updating attribute value'
+            );
 
-                $this->connection->update($attribute_table, ['value' => $value], 'value_id = ' . $datos['value_id']);
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Updating attribute value: '.print_R($e->getMessage(),1));
-                return false;
-
-            }
+            if (!$result_update) return false;
 
         }
 
@@ -10889,7 +10894,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      * @return boolean                  result of compare
      */
     private function compareValue($attribute, $db_value, $value){
-
 
         if (isset($attribute[\Magento\Catalog\Api\Data\EavAttributeInterface::IS_WYSIWYG_ENABLED]) && $attribute[\Magento\Catalog\Api\Data\EavAttributeInterface::IS_WYSIWYG_ENABLED] == 1){ 
         
@@ -10933,19 +10937,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_delete = microtime(1);
 
-        try{
-
-            //If the attribute is global, we eliminate values from other stores.
-            $query_delete = " DELETE FROM ".$attribute_table." WHERE store_id != 0 AND attribute_id = ".$attribute_id." AND ".$identifier . ' = '.$entityId;
-
-            $this->sl_connection_query($query_delete);
-
-        }catch(\Exception $e){
-
-            $this->slDebuger->debug('## Error. Deleting global attribute in other stores than 0: '.print_R($e->getMessage(),1));
-
-        }
-
+        //If the attribute is global, we eliminate values from other stores.
+        $this->slConnection->slDBDelete(
+            $attribute_table,
+            ['store_id != 0', 'attribute_id = ?' => $attribute_id, $identifier.' = ? ' => $entityId],
+            'Deleting global attribute in other stores than 0'
+        );
         
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_delete_attribute_global: ', 'timer', (microtime(1) - $time_delete));
 
@@ -11336,7 +11333,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             $tax_classes_collection = $this->connection->fetchAll(
                 $this->connection->select()
                     ->from(
-                        $this->getTable('tax_class'),
+                        $this->slConnection->getTable('tax_class'),
                         [
                             \Magento\Tax\Model\ClassModel::KEY_ID,
                             \Magento\Tax\Model\ClassModel::KEY_NAME
@@ -11657,15 +11654,13 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         if ($img_filename) {
         
-            try{
+            $this->slConnection->slDBUpdate(
+                $attribute_table, 
+                ['value' => $img_filename], 
+                'value_id = ' . $datos['value_id'],
+                'Updating category image'
+            );
 
-                $this->connection->update($attribute_table, ['value' => $img_filename], 'value_id = ' . $datos['value_id']);
-
-            }catch(\Exception $e){
-
-                $this->slDebuger->debug('## Error. Updating category image: '.print_R($e->getMessage(),1));
-
-            }
             if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('## time_process_mg_image: ', 'timer', (microtime(1) - $time_ini_check_mg_image));
 
         }
@@ -11694,14 +11689,21 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!empty($link_ids_to_delete)){
 
-                $query_delete = " DELETE FROM ".$product_link_table." WHERE link_id IN  (".implode(',', $link_ids_to_delete).")";
-                $this->sl_connection_query($query_delete);
+                $this->slConnection->slDBDelete(
+                    $product_link_table,
+                    ['link_id IN ('.implode(',', $link_ids_to_delete).')']
+                );
 
-                $query_delete = " DELETE FROM ".$this->getTable('catalog_product_link_attribute_int')." WHERE link_id IN  (".implode(',', $link_ids_to_delete).")";
-                $this->sl_connection_query($query_delete);
-    
-                $query_delete = " DELETE FROM ".$this->getTable('catalog_product_link_attribute_decimal')." WHERE link_id IN  (".implode(',', $link_ids_to_delete).")";
-                $this->sl_connection_query($query_delete);
+                $this->slConnection->slDBDelete(
+                    $this->slConnection->getTable('catalog_product_link_attribute_int'),
+                    ['link_id IN ('.implode(',', $link_ids_to_delete).')']
+                );
+
+                $this->slConnection->slDBDelete(
+                    $this->slConnection->getTable('catalog_product_link_attribute_decimal'),
+                    ['link_id IN ('.implode(',', $link_ids_to_delete).')']
+                );
+
                 
             }
 
@@ -11725,7 +11727,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $time_ini_generate_link = microtime(1);
 
-        $table_status = $this->connection->showTableStatus($product_link_table);
+        $table_status = $this->slConnection->slDBShowTableStatus($product_link_table);
         
         $link_id = $table_status['Auto_increment'];
 
@@ -11736,7 +11738,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             'link_type_id' => $link_type
         ];
         
-        $result_create = $this->connection->insertOnDuplicate(
+        $result_create = $this->slConnection->slDBInsertOnDuplicate(
             $product_link_table,
             $link_values,
             array_keys($link_values)
@@ -11782,7 +11784,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     'value' => $position
                 ];
                 
-                $result_create = $this->connection->insertOnDuplicate(
+                $this->slConnection->slDBInsertOnDuplicate(
                     $link_attributes_data[$link_type]['position']['table'],
                     $position_values,
                     array_keys($position_values)
@@ -11800,7 +11802,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         'value' => $link_qty
                     ];
                 
-                    $result_create = $this->connection->insertOnDuplicate(
+                    $this->slConnection->slDBInsertOnDuplicate(
                         $link_attributes_data[$this->product_link_type_grouped_db]['qty']['table'],
                         $qty_values,
                         array_keys($qty_values)
@@ -11906,7 +11908,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if ($parent_product_core_data['type_id'] != $this->product_type_grouped){
 
-                $this->connection->update($product_table, ['type_id' => $this->product_type_grouped], 'entity_id = ' . $product_id);
+                $this->slConnection->slDBUpdate(
+                    $product_table, 
+                    ['type_id' => $this->product_type_grouped], 
+                    'entity_id = ' . $product_id
+                );
 
             }
 
@@ -11942,7 +11948,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                                     'value' => $link_qty
                                 ];
                             
-                                $result_create = $this->connection->insertOnDuplicate(
+                                $this->slConnection->slDBInsertOnDuplicate(
                                     $link_attributes_data[$this->product_link_type_grouped_db]['qty']['table'],
                                     $qty_values,
                                     array_keys($qty_values)
@@ -11952,7 +11958,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                                 
                                 if ($qty_link_data['value'] != $link_qty){
                                     
-                                    $this->connection->update($link_attributes_data[$this->product_link_type_grouped_db]['qty']['table'], ['value' => $link_qty], 'value_id = ' . $qty_link_data['value_id']);
+                                    $this->slConnection->slDBUpdate(
+                                        $link_attributes_data[$this->product_link_type_grouped_db]['qty']['table'], 
+                                        ['value' => $link_qty], 
+                                        'value_id = ' . $qty_link_data['value_id']
+                                    );
 
                                 }
 
@@ -12006,11 +12016,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if ($new_connectors_data !== false && $new_connectors_data != $connectors_data){
 
-                    $query_update  = " UPDATE ".$this->saleslayer_multiconn_table.
-                        " SET sl_connectors =  ? ".
-                        " WHERE id =  ? ";
-
-                    $this->sl_connection_query($query_update, array($new_connectors_data, $sl_multiconn_reg['id']));
+                    $this->slConnection->slDBUpdate(
+                        $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                        ['sl_connectors' => $new_connectors_data],
+                        ['id = ?' => $sl_multiconn_reg['id']]
+                    );
                     
                 }
 
@@ -12035,7 +12045,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function saveConns($sl_data){
 
-        $sl_multiconn_table_data = $this->connection->fetchAll(" SELECT * FROM ".$this->saleslayer_multiconn_table);
+        $sl_multiconn_table_data = $this->connection->fetchAll(" SELECT * FROM ".$this->slConnection->getTable($this->saleslayer_multiconn_table));
 
         foreach ($sl_data as $comp_id => $sl_data_regs) {
 
@@ -12064,11 +12074,18 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                             if ($connectors_data !== false){
 
-                                $query_insert = " INSERT INTO ".$this->saleslayer_multiconn_table.
-                                    "(`item_type`,`sl_id`,`sl_comp_id`,`sl_connectors`) ".
-                                    "values ( ? , ? , ? , ? );";
+                                $values_to_insert = [
+                                    'item_type' => $item_type,
+                                    'sl_id' => $item_id,
+                                    'sl_comp_id' => $comp_id,
+                                    'sl_connectors' => $connectors_data
+                                ];
 
-                                $this->sl_connection_query($query_insert, array($item_type, $item_id, $comp_id, $connectors_data));
+                                $this->slConnection->slDBInsertOnDuplicate(
+                                    $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                                    $values_to_insert,
+                                    array_keys($values_to_insert)
+                                );
 
                             }
 
@@ -12241,9 +12258,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     
                     if ($new_connectors_data !== false){
 
-                        $query_update  = " UPDATE ".$this->saleslayer_multiconn_table." SET sl_connectors = ?  WHERE id = ? ";
-                        
-                        $this->sl_connection_query($query_update, array($new_connectors_data , $this->sl_multiconn_table_data['category'][$sl_id]['id']));
+                        $this->slConnection->slDBUpdate(
+                            $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                            ['sl_connectors' => $new_connectors_data],
+                            ['id = ?' => $this->sl_multiconn_table_data['category'][$sl_id]['id']]
+                        );
 
                     }
 
@@ -12259,9 +12278,18 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 
                 if ($connectors_data !== false){
                     
-                    $query_insert = " INSERT INTO ".$this->saleslayer_multiconn_table."(`item_type`,`sl_id`,`sl_comp_id`,`sl_connectors`) values ( ? , ? , ? , ? );";
+                    $values_to_insert = [
+                        'item_type' => 'category',
+                        'sl_id' => $sl_id,
+                        'sl_comp_id' => $this->comp_id,
+                        'sl_connectors' => $connectors_data
+                    ];
 
-                    $this->sl_connection_query($query_insert, array('category', $sl_id, $this->comp_id, $connectors_data));
+                    $this->slConnection->slDBInsertOnDuplicate(
+                        $this->slConnection->getTable($this->saleslayer_multiconn_table),
+                        $values_to_insert,
+                        array_keys($values_to_insert)
+                    );
 
                 }
                 
