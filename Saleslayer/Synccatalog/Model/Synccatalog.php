@@ -7888,14 +7888,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->joinLeft(
                     ['c4' => $category_table], 
                     'c1.entity_id = c4.entity_id',
-                    ['path']
+                    ['path','parent_id']
                 )
                 ->group('c1.entity_id')
         );
 
         if (!empty($categories_data)){
 
-            $category_id_found = 0;
+            $category_id_found = $category_id_found_temp = 0;
             
             foreach ($categories_data as $category_data) {
 
@@ -7922,14 +7922,24 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                     if (!empty($path_data) && $path_data['parent_id'] == 1){
 
-                        $category_id_found = $category_data['entity_id'];
-                        break;
+                        if (!is_null($this->mg_parent_category_id) && $category_data['parent_id'] == $this->mg_parent_category_id){
+
+                            $category_id_found = $category_data['entity_id'];
+                            break;
+
+                        }else if ($category_id_found_temp == 0){
+
+                            $category_id_found_temp = $category_data['entity_id'];
+                            
+                        }
 
                     }
 
                 }
 
             }
+
+            if ($category_id_found == 0 && $category_id_found_temp !== 0) $category_id_found = $category_id_found_temp;
 
             if ($category_id_found !== 0){
 

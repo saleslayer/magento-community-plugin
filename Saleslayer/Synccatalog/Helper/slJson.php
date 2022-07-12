@@ -59,13 +59,17 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function unserialize($string){
 
-        try{
-
-            return $this->json->unserialize($string);
-
-        }catch(\invalidArgumentException $e){
+        if (is_string($string) && $string !== ''){
             
-            $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original string: '.print_r($string,1));
+            try{
+
+                return $this->json->unserialize($string);
+
+            }catch(\invalidArgumentException $e){
+                
+                $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original string: '.print_r($string,1));
+
+            }
 
         }
 
