@@ -9925,14 +9925,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             $product_field_ID_cont = $product_field_ID_catalogue_cont = array();
             foreach ($data_schema['products']['fields'] as $key => $key_data){
                 if ($product_field_ID_key !== '' && $product_field_ID_catalogue_key !== '') break;
-                if ($product_field_ID_key == '' and $this->product_field_id == strtoupper($key)){
+                if ($product_field_ID_key == '' and strtolower($this->product_field_id) == strtolower($key)){
                     $product_field_ID_key = $key;
                     $product_field_ID_cont = $key_data;
                     continue;
                 }
                 if ($product_field_ID_catalogue_key == '' and 
-                        (strtoupper($this->product_field_catalogue_id) == strtoupper($key) or 
-                        'CATALOGUE_ID' == strtoupper($key)
+                        (strtolower($this->product_field_catalogue_id) == strtolower($key) or 
+                        'id_catalogue' == strtolower($key)
                         )
                     ){
                     $product_field_ID_catalogue_key = $key;
