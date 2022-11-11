@@ -2493,25 +2493,17 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->limit(1)
         );
 
+        $sl_qty = $mg_existing_stock['qty'] ?? 0;
+
         $avoid_stock_update = $avoid_backorders_update = $avoid_min_sale_qty_update = $avoid_max_sale_qty_update = false;
 
-        if (isset($sl_inventory_data['sl_qty'])){
+        if (isset($sl_inventory_data['sl_qty']) && $sl_inventory_data['sl_qty'] !== ''){
 
-            if (!is_null($sl_inventory_data['sl_qty']) && $sl_inventory_data['sl_qty'] !== ''){
-                
-                $sl_qty = $sl_inventory_data['sl_qty'];
-            
-            }else if (!empty($mg_existing_stock)){
+            $sl_qty = intval($sl_inventory_data['sl_qty']);
 
-                $sl_qty = $mg_existing_stock['qty'];
-            
-            }else{
-
-                $sl_qty = 0;
-            
+            if ($sl_qty > 0) {
+                $is_in_stock = 1;
             }
-
-            if ($sl_qty) $is_in_stock = 1;
 
             if ($mg_product_core_data['type_id'] == $this->product_type_configurable){
 
@@ -2519,7 +2511,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 
             }else{
 
-                $manage_stock = 1;
+                if ($sl_qty > 0) {
+                    $manage_stock = 1;
+                }
                 
             }
 
@@ -9925,14 +9919,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             $product_field_ID_cont = $product_field_ID_catalogue_cont = array();
             foreach ($data_schema['products']['fields'] as $key => $key_data){
                 if ($product_field_ID_key !== '' && $product_field_ID_catalogue_key !== '') break;
-                if ($product_field_ID_key == '' and strtolower($this->product_field_id) == strtolower($key)){
+                if ($product_field_ID_key == '' and $this->product_field_id == strtoupper($key)){
                     $product_field_ID_key = $key;
                     $product_field_ID_cont = $key_data;
                     continue;
                 }
                 if ($product_field_ID_catalogue_key == '' and 
-                        (strtolower($this->product_field_catalogue_id) == strtolower($key) or 
-                        'id_catalogue' == strtolower($key)
+                        (strtoupper($this->product_field_catalogue_id) == strtoupper($key) or 
+                        'CATALOGUE_ID' == strtoupper($key)
                         )
                     ){
                     $product_field_ID_catalogue_key = $key;
