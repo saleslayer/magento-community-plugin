@@ -21,7 +21,7 @@ Please check the [important notes](https://support.saleslayer.com/magento/import
 
 ## Version compatibility
 
-Tested from 2.1.4 to 2.4.4
+Tested from 2.1.4 to 2.4.5-p1
 
 ## Requirements
 

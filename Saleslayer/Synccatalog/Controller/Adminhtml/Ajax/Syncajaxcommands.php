@@ -30,7 +30,7 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
         $permited_command = array('infopreload','removelogs','removeindexes','deleteregs','deleteunusedimages');
         /** @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
-        $array_return = array();
+        $array_return = [];
 
         if(in_array($command, $permited_command)){
 

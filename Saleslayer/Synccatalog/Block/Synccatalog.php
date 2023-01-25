@@ -61,7 +61,7 @@ class Synccatalog extends \Magento\Framework\View\Element\Template
      */
     public function getCollection()
     {
-        if (is_null($this->_synccatalogCollection)) {
+        if (null === $this->_synccatalogCollection) {
             $this->_synccatalogCollection = $this->_getCollection();
             $this->_synccatalogCollection->setCurPage($this->getCurrentPage());
             $this->_synccatalogCollection->setOrder('last_update','asc');
@@ -91,34 +91,4 @@ class Synccatalog extends \Magento\Framework\View\Element\Template
         return $this->getUrl('*/*/view', array('id' => $synccatalogItem->getId()));
     }
     
-    /**
-     * Get a pager
-     *
-     * @return string|null
-     */
-    public function getPager()
-    {
-        $pager = $this->getChildBlock('synccatalog_list_pager');
-        if ($pager instanceof \Magento\Framework\Object) {
-            
-            $pager->setTotalNum($this->getCollection()->getSize());
-            $pager->setCollection($this->getCollection());
-            $pager->setShowPerPage(TRUE);
-            $pager->setFrameLength(
-                $this->_scopeConfig->getValue(
-                    'design/pagination/pagination_frame',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                )
-            )->setJump(
-                $this->_scopeConfig->getValue(
-                    'design/pagination/pagination_frame_skip',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                )
-            );
-
-            return $pager->toHtml();
-        }
-
-        return NULL;
-    }
 }

@@ -42,7 +42,7 @@ class Updateconnfield extends \Magento\Framework\App\Action\Action
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $response->setHeader('Content-type', 'text/plain');
 
-        $array_return = array();
+        $array_return = [];
         $field_message = (isset($field_names[$field_name])) ? $field_names[$field_name] : $field_name;
 
         if ($result_update){

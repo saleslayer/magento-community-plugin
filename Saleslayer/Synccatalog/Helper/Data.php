@@ -33,7 +33,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $tableFactory;
     
     /**
-     * @var \Magento\Eav\Api\Data\AttributeOption
+     * @var \Magento\Eav\Model\Entity\Attribute\Option
      */
     protected $optionModel;
 
@@ -106,7 +106,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param string $attributeCode attribute code  in string  ('color' or 'size'....)
      * @param int $optionId Option_id
      * @param string $optionDefaultValue value to save  if $option_stores view is null
-     * return booleano
+     * @return boolean
      */
     public function updateAttributeOption($attribute_code, $option_id, $option_data){
         
@@ -134,12 +134,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $sort_order = $option->getSortOrder();
 
-            $attribute->setData('option', array('value' => array($option_id => $option_data)));
+            $attribute->setData('option', [
+                'value' => [
+                    $option_id => $option_data
+                ]
+            ]);
+
             $attribute->save();
 
         }catch(\Exception $e){
 
-            $this->slDebuger->debug('## Error on saving cloned option from attribute: '.print_R($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving cloned option from attribute: '.print_r($e->getMessage(),1));
             return false;
 
         }
@@ -151,7 +156,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         
         }catch(\Exception $e){
         
-            $this->slDebuger->debug('## Error on saving setSortOrder: '.print_R($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving setSortOrder: '.print_r($e->getMessage(),1));
 
         }
 
@@ -197,7 +202,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * Get attribute by code.
      *
      * @param string $attributeCode
-     * @return \Magento\Catalog\Api\Data\ProductAttributeInterface
+     * @return \Magento\Catalog\Model\ResourceModel\Eav\Attribute
      */
     public function getAttribute($attributeCode){
 
@@ -210,8 +215,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param string $attributeCode Attribute the option should exist in
      * @param string $label Label to find or add
-     * @return int
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return int|boolean
      */
     public function createOrGetId($attributeCode, $label, $store_ids){
 
@@ -331,19 +335,63 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Create or get a matching attribute option
+     *
+     * @param string $attributeCode Attribute the option should exist in
+     * @param string $attributeValue Attribute value to create or get
+     * @param int $storeViewId  Store view id
+     * @return int
+     */
+    public function createOrGetOptionIdByValue($attribute, $attributeValue, $storeViewId)
+    {
+        if (strlen($attributeValue) < 1) {
+            $this->slDebuger->debug('## Error creating new option. Label for '.$attribute->getAttributeCode().' must not be empty.');
+            return false;    
+        }
+
+        $attribute->setStoreId($storeViewId);
+
+        // Does it already exist?        
+        $optionId = $attribute->getSource()->getOptionId($attributeValue);
+
+        if ($optionId === null) {
+            // If no, add it.
+            /** @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel */
+            $optionLabel = $this->optionLabelFactory->create();
+            $optionLabel->setStoreId($storeViewId);
+            $optionLabel->setLabel((string) $attributeValue);
+
+            $option = $this->optionFactory->create();
+            $option->setLabel((string) $attributeValue);
+            $option->setStoreLabels([$optionLabel]);
+
+            $this->attributeOptionManagement->add(
+                \Magento\Catalog\Model\Product::ENTITY,
+                $attribute->getAttributeId(),
+                $option
+            );
+
+            // Get the inserted ID. Should be returned from the installer, but it isn't.
+            $optionId = $attribute->getSource()->getOptionId($attributeValue);
+        }
+
+        return $optionId;
+    }
+
+    /**
      * Find the ID of an option matching $label, if any.
      *
      * @param string $attributeCode Attribute code
      * @param string $label Label to find
      * @param bool $force If true, will fetch the options even if they're already cached.
-     * @return int|false
+     * @return int|boolean
      */
     public function getOptionId($attributeCode, $label, $force = false){
         
         $attribute = $this->getAttribute($attributeCode);
 
         if ($force === true || !isset($this->attributeValues[$attribute->getAttributeId()])) {
-            $this->attributeValues[$attribute->getAttributeId()] = array();
+            $this->attributeValues[$attribute->getAttributeId()] = [];
 
             // We have to generate a new sourceModel instance each time through to prevent it from
             // referencing its _options cache. No other way to get it to pick up newly-added values.

@@ -172,7 +172,7 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
      */
     private function getRootCategories(){
 
-        $root_categories = array();
+        $root_categories = [];
 
         $this->connection = $this->resourceConnection->getConnection();
 
@@ -187,7 +187,7 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
         $category_table = $this->slConnection->getTable('catalog_category_entity');
         $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
         
-        if (!is_null($category_name_table)){
+        if (null !== $category_name_table) {
 
             if (version_compare($this->slConnection->mg_version, '2.3.0') < 0) {
             
