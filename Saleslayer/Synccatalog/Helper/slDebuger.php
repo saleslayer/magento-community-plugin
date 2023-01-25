@@ -90,7 +90,7 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
                 case 'timer':
                     $file = $this->sl_logs_path.'_debbug_log_saleslayer_timers_'.date('Y-m-d').'.dat';
 
-                    if (!is_null($seconds)){
+                    if (null !== $seconds){
 
                         $msg .= $seconds.' seconds.';
 

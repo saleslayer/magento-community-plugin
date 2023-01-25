@@ -64,7 +64,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
             $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
         }
 
-        $auto_sync_options = array();
+        $auto_sync_options = [];
         $auto_sync_values = array(0, 1, 3, 6, 8, 12, 15, 24, 48, 72);
         foreach ($auto_sync_values as $auto_sync_value) {
             if ($auto_sync_value == 0){
@@ -102,7 +102,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
             $hour_input_disabled = true;
         }
 
-        $auto_sync_hour_options = array();
+        $auto_sync_hour_options = [];
         $hours_range = range(0, 23);
         foreach($hours_range as $hour){
             $auto_sync_hour_options[$hour] = array('label' => (strlen($hour) == 1 ? '0'.$hour : $hour).':00', 'value' => $hour);

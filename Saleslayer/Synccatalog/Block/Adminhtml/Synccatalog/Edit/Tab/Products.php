@@ -93,14 +93,14 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
         }else{
             if (isset($modelData['store_view_ids'])
                 && !is_array($modelData['store_view_ids'])
-                && !is_null($modelData['store_view_ids'])){
+                && null !== $modelData['store_view_ids']) {
                 $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
             }else{
                 $modelData['store_view_ids'] = array('0') ;
             }
             if (isset($modelData['format_configurable_attributes'])
                 && !is_array($modelData['format_configurable_attributes'])
-                && !is_null($modelData['format_configurable_attributes'])){
+                && null !== $modelData['format_configurable_attributes']){
                 $modelData['format_configurable_attributes'] = $this->slJson->unserialize($modelData['format_configurable_attributes']);
             }
             if (isset($modelData['avoid_stock_update']) && $modelData['avoid_stock_update'] == '1'){
@@ -139,7 +139,7 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
             ]
         );
 
-        $configurable_attributes = $all_attributes = $attributes_multi = array();
+        $configurable_attributes = $all_attributes = $attributes_multi = [];
 
         $entityType = $this->productModel->getResource()->getTypeId();
         $this->collectionAttribute->addFieldToFilter($this->setAttribute::KEY_ENTITY_TYPE_ID, $entityType);

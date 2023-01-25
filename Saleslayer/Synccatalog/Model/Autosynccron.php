@@ -1,34 +1,35 @@
 <?php
 namespace Saleslayer\Synccatalog\Model;
 
-use \Magento\Framework\Model\Context as context;
-use \Magento\Framework\Registry as registry;
-use \Magento\Framework\Model\ResourceModel\AbstractResource as resource;
-use \Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
-use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
+use Magento\Catalog\Api\ProductRepositoryInterface as productRepository;
+use Magento\Catalog\Api\ProductAttributeManagementInterface as productAttributeManagementInterface;
+use Magento\Catalog\Model\Category as categoryModel;
+use Magento\Catalog\Model\Product as productModel;
+use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
+use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
+use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
+use Magento\Cron\Model\Schedule as cronSchedule;
+use Magento\Eav\Model\Config as eavConfig;
+use Magento\Eav\Model\Entity\Attribute as attribute;
+use Magento\Eav\Model\Entity\Attribute\Set as attribute_set;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\Collection as collectionOption;
+use Magento\Framework\Registry as registry;
+use Magento\Framework\App\ResourceConnection as resourceConnection;
+use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface as scopeConfigInterface;
+use Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
+use Magento\Framework\Filesystem\DirectoryList  as directoryListFilesystem;
+use Magento\Framework\Model\Context as context;
+use Magento\Framework\Model\ResourceModel\AbstractResource as resource;
+use Magento\Indexer\Model\Indexer as indexer;
+use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
-use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
-use \Magento\Framework\Filesystem\DirectoryList  as directoryListFilesystem;
-use \Magento\Catalog\Model\Category as categoryModel;
-use \Magento\Catalog\Model\Product as productModel;
-use \Magento\Eav\Model\Entity\Attribute as attribute;
-use \Magento\Eav\Model\Entity\Attribute\Set as attribute_set;
-use \Magento\Catalog\Api\ProductAttributeManagementInterface as productAttributeManagementInterface;
-use \Magento\Indexer\Model\Indexer as indexer;
-use \Magento\Framework\App\ResourceConnection as resourceConnection;
-use \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\Collection as collectionOption;
-use \Magento\Cron\Model\Schedule as cronSchedule;
-use \Magento\Framework\App\Config\ScopeConfigInterface as scopeConfigInterface;
-use \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
-use \Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
-use \Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
-use \Magento\Eav\Model\Config as eavConfig;
-use \Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
-use \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
-use \Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Zend_Db_Expr as Expr;
 
 /**
@@ -70,6 +71,7 @@ class Autosynccron extends Synccatalog{
                 typeListInterface $typeListInterface,
                 countryOfManufacture $countryOfManufacture,
                 layoutSource $layoutSource,
+                productRepository $productRepository,
                 resource $resource = null,
                 resourceCollection $resourceCollection = null,
                 array $data = []) {
@@ -99,6 +101,7 @@ class Autosynccron extends Synccatalog{
                             $typeListInterface,
                             $countryOfManufacture,
                             $layoutSource,
+                            $productRepository,
                             $resource,
                             $resourceCollection,
                             $data);
@@ -251,7 +254,7 @@ class Autosynccron extends Synccatalog{
                 
                 if (!empty($all_connectors)){
 
-                    $connectors_to_check = array();
+                    $connectors_to_check = [];
 
                     foreach ($all_connectors as $idx_conn => $connector) {
 
@@ -323,18 +326,33 @@ class Autosynccron extends Synccatalog{
                             $data_return = $this->store_sync_data($connector_id, $last_sync);
                             
                             $this->slDebuger->debug("#### time_cron_sync: " . (microtime(1) - $time_ini_cron_sync - $time_random) . ' seconds.', 'autosync');
-
                             
                             if (is_array($data_return)){
 
-                                //If the connector result has data we break process so it can sync.
-                                if (!empty($data_return)){ 
+                                if (!isset($data_return['storage_error'])){
 
-                                    break;
+                                    //If the connector result has data we break process so it can sync.
+                                    if (!empty($data_return)){ 
+
+                                        break;
+
+                                    }
+
+                                    //If the connector result data is empty we continue to the next connector.
+
+                                }else{
+
+                                    //If there was any error during storage, we print it
+                                    unset($data_return['storage_error']);
+
+                                    $this->slDebuger->debug('Errors found when storing Sales Layer data: ', 'autosync');
+                                    foreach ($data_return as $error_message){
+            
+                                        $this->slDebuger->debug($error_message, 'autosync');
+            
+                                    }
 
                                 }
-
-                                //If the connector result data is empty we continue to the next connector.
 
                             }else{
 
@@ -342,8 +360,7 @@ class Autosynccron extends Synccatalog{
                                 $this->slDebuger->debug($data_return, 'autosync');
 
                             }
-
-                            
+ 
                         }
 
                     }else{

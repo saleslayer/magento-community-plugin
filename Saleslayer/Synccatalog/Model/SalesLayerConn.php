@@ -414,7 +414,7 @@ class SalesLayerConn {
 
                 $this->response_tables_info =
                 $this->response_files_list  =
-                $image_order_sizes          = array();
+                $image_order_sizes          = [];
 
                 if (isset($this->data_returned['data_schema_info']) && is_array($this->data_returned['data_schema_info']) &&
                     count($this->data_returned['data_schema_info'])) {
@@ -450,7 +450,7 @@ class SalesLayerConn {
 
                 $this->response_tables_data        =
                 $this->response_table_modified_ids =
-                $this->response_table_deleted_ids  = array();
+                $this->response_table_deleted_ids  = [];
 
                 if (is_array($this->data_returned['data_schema'])) {
 
@@ -482,7 +482,7 @@ class SalesLayerConn {
                             }
                         }
 
-                        $this->response_tables_data[$table]=array('modified'=>array(), 'deleted'=>array());
+                        $this->response_tables_data[$table]=array('modified'=>[], 'deleted'=>[]);
                         $this->response_tables_info[$table]['count_registers'] =
 
                             (is_array($this->data_returned['data'][$table])) ? count($this->data_returned['data'][$table]) : 0;
@@ -505,7 +505,7 @@ class SalesLayerConn {
 
                                 } else {
 
-                                    $data=array();
+                                    $data=[];
 
                                     $this->response_table_modified_ids[$table][] = $data['id'] = $fields[1];
 
@@ -529,7 +529,7 @@ class SalesLayerConn {
 
                                                     if (isset($fields[$ord][0]) and $fields[$ord][0]!='U') {
 
-                                                        $data['data'][$fname]=array();
+                                                        $data['data'][$fname]=[];
 
                                                         foreach ($fields[$ord] as $fsub) {
 
@@ -589,15 +589,15 @@ class SalesLayerConn {
      *
      */
 
-    public function set_info ($update_items=array(), $delete_items=array(), $compression=false) {
+    public function set_info ($update_items=[], $delete_items=[], $compression=false) {
 
-        $data=array();
+        $data=[];
 
         if ($this->hasConnector()) {
 
             if (is_array($update_items) and count($update_items)) {
 
-                $data['input_data']=array();
+                $data['input_data']=[];
 
                 foreach ($update_items as $table => &$items) {
 
@@ -607,7 +607,7 @@ class SalesLayerConn {
 
             if (is_array($delete_items) and count($delete_items)) {
 
-                $data['delete_data']=array();
+                $data['delete_data']=[];
 
                 foreach ($update_items as $table => &$items) {
 
@@ -820,7 +820,7 @@ class SalesLayerConn {
 
         return ($table === null) ? $this->response_table_deleted_ids
                                    :
-                                   ((isset($this->response_table_deleted_ids[$table])) ? $this->response_table_deleted_ids[$table] : array());
+                                   ((isset($this->response_table_deleted_ids[$table])) ? $this->response_table_deleted_ids[$table] : []);
     }
 
     /**
@@ -834,7 +834,7 @@ class SalesLayerConn {
 
         return ($table === null) ? $this->response_table_modified_ids
                                    :
-                                   ((isset($this->response_table_modified_ids[$table])) ? $this->response_table_modified_ids[$table] : array());
+                                   ((isset($this->response_table_modified_ids[$table])) ? $this->response_table_modified_ids[$table] : []);
     }
 
     /**
@@ -850,7 +850,7 @@ class SalesLayerConn {
 
             if (isset($this->response_tables_data)) {
 
-                $result=array();
+                $result=[];
 
                 foreach ($this->response_tables_data as $table=>$data) {
 
@@ -868,7 +868,7 @@ class SalesLayerConn {
             return $this->response_tables_data[$table]['modified'];
         }
 
-        return array();
+        return [];
     }
 
     /**

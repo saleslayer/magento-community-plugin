@@ -28,7 +28,7 @@ class Showdebbug extends \Magento\Framework\App\Action\Action
 
         /** @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
-        $array_return = array();
+        $array_return = [];
 
         switch ($command){
             case 'showlogfiles':

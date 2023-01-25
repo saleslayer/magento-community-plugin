@@ -20,7 +20,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
     protected $deploymentConfig;
     protected $connection;
     public $mg_version = '';
-    protected $mg_tables_23 = array();
+    protected $mg_tables_23 = [];
     protected $table_prefix = null;
 
     /**
@@ -99,7 +99,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function getTablePrefix(){
 
-        if (is_null($this->table_prefix)) {
+        if (null === $this->table_prefix) {
                 
             $this->table_prefix = (string) $this->deploymentConfig->get(
                 ConfigOptionsListConstants::CONFIG_PATH_DB_PREFIX
@@ -145,7 +145,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         
         }catch(\Exception $e){
             
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -175,7 +175,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
         }catch(\Exception $e){
             
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -210,7 +210,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -247,7 +247,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -282,7 +282,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -299,7 +299,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
      * @param  string   $sl_log_type            sl log type to print
      * @return boolean                          result of update
      */
-    public function slDBUpdate($table_name, $values_to_update, $condition = array(), $error_message = '', $sl_log_type = ''){
+    public function slDBUpdate($table_name, $values_to_update, $condition = [], $error_message = '', $sl_log_type = ''){
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -319,7 +319,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 
@@ -335,7 +335,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
      * @param  string   $sl_log_type            sl log type to print
      * @return boolean                          result of delete
      */
-    public function slDBDelete($table_name, $condition = array(), $error_message = '', $sl_log_type = ''){
+    public function slDBDelete($table_name, $condition = [], $error_message = '', $sl_log_type = ''){
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -354,7 +354,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_R($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
 
         }
 

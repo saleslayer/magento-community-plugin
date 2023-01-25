@@ -32,7 +32,7 @@ class Deletelogs extends \Magento\Framework\App\Action\Action
         
         $result = $this->modelo->deleteSLLogFile($files_to_delete);
 
-        $array_return = array();
+        $array_return = [];
         
         if ($result){
 
