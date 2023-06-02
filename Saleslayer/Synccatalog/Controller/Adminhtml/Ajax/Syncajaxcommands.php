@@ -27,7 +27,7 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
     {
 
         $command = $this->getRequest()->getParam('command');
-        $permited_command = array('infopreload','removelogs','removeindexes','deleteregs','deleteunusedimages');
+        $permited_command = array('removelogs','removeindexes','deleteregs','deleteunusedimages');
         /** @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $array_return = [];
@@ -37,11 +37,6 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
             $return_message = '';
 
             switch ($command){
-                case 'infopreload':
-                    $this->modelo->loadMulticonnItems();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
                 case 'removelogs':
                     $this->modelo->deleteSLLogs();
                     $response->setHeader('Content-type', 'text/plain');
