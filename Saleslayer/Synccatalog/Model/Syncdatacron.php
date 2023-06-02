@@ -1,36 +1,36 @@
 <?php
 namespace Saleslayer\Synccatalog\Model;
 
-use Magento\Catalog\Api\ProductRepositoryInterface as productRepository;
-use Magento\Catalog\Api\ProductAttributeManagementInterface as productAttributeManagementInterface;
+use Magento\Framework\Model\Context as context;
+use Magento\Framework\Registry as registry;
+use Magento\Framework\Model\ResourceModel\AbstractResource as resource;
+use Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
+use Magento\Framework\Filesystem\DirectoryList as directoryListFilesystem;
 use Magento\Catalog\Model\Category as categoryModel;
 use Magento\Catalog\Model\Product as productModel;
-use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
-use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
-use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
-use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
-use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
-use Magento\Cron\Model\Schedule as cronSchedule;
-use Magento\Eav\Model\Config as eavConfig;
+use Magento\Catalog\Api\ProductRepositoryInterface as productRepository;
 use Magento\Eav\Model\Entity\Attribute as attribute;
 use Magento\Eav\Model\Entity\Attribute\Set as attribute_set;
-use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\Collection as collectionOption;
-use Magento\Framework\Registry as registry;
-use Magento\Framework\App\ResourceConnection as resourceConnection;
-use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface as scopeConfigInterface;
-use Magento\Framework\Data\Collection\AbstractDb as resourceCollection;
-use Magento\Framework\Filesystem\DirectoryList  as directoryListFilesystem;
-use Magento\Framework\Model\Context as context;
-use Magento\Framework\Model\ResourceModel\AbstractResource as resource;
+use Magento\Catalog\Api\ProductAttributeManagementInterface as productAttributeManagementInterface;
 use Magento\Indexer\Model\Indexer as indexer;
-use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
+use Magento\Framework\App\ResourceConnection as resourceConnection;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\Collection as collectionOption;
+use Magento\Cron\Model\Schedule as cronSchedule;
+use Magento\Framework\App\Config\ScopeConfigInterface as scopeConfigInterface;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator as categoryUrlPathGenerator;
+use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGenerator;
+use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
+use Magento\Eav\Model\Config as eavConfig;
+use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
+use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
+use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
-use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
-use Zend_Db_Expr as Expr;
+use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
+use \Zend_Db_Expr as Expr;
 
 /**
  * Class Saleslayer_Synccatalog_Model_Syncdatacron
@@ -532,6 +532,7 @@ class Syncdatacron extends Synccatalog{
                     ->where("item_type = ? ", $index)
                     ->where('sync_tries <= 2')
                     ->order('sync_tries ASC')
+                    ->order('level ASC')
                     ->order('id ASC')
                     ->limit(5)
             );
@@ -546,10 +547,9 @@ class Syncdatacron extends Synccatalog{
                         ->where("sync_type = 'update'")
                         ->where("item_type = ? ", $this->test_one_item)
                         ->where('sync_tries <= 2')
-                        ->where('id = ?', 1500)
                         ->order('sync_tries ASC')
                         ->order('id ASC')
-                        ->limit(5)
+                        ->limit(1)
                 );
 
             }
