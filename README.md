@@ -19,10 +19,6 @@ Check out the latest changes at our [changelog][changelog-md].
 
 Please check the [important notes] for the installation. (In some cases, a Sales Layer account might be needed to access the documentation)
 
-## Version compatibility
-
-Tested from 2.1.4 to 2.4.5-p1.
-
 ## Requirements
 
 * cUrl extension installed; In order to call and obtain the information from Sales Layer.
@@ -67,10 +63,11 @@ php bin/magento cache:clean
 
 ## Version Guidance
 
-| Version | Status         | Magento Plugin version     | PHP Version    |
-|---------|----------------|----------------------------|----------------|
-| 2.6.1   | EOL            | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |
-| 2.6.2   | Latest         | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |	
+| Version         | Status         | Magento Plugin version     | PHP Version    |
+|-----------------|----------------|----------------------------|----------------|
+| 2.5.x           | EOL            | >= 2.4.1, <= 2.4.3         | 7.1, 7.2, 7.3  |
+| 2.6.0 - 2.6.1   |                | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |
+| 2.6.2           | Latest         | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |	
 
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
