@@ -65,6 +65,13 @@ php bin/magento cache:clean
 #### 3.1 Go to Sales Layer -> Import -> Add connector and add the connector id and secret key.
 #### 3.2 Finally, In Sales Layer -> Import -> The connector you created, push Synchronize Connector to import categories, products and variants automatically.
 
+## Version Guidance
+
+| Version | Status         | Magento Plugin version     | PHP Version    |
+|---------|----------------|----------------------------|----------------|
+| 2.6.1   | EOL            | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |
+| 2.6.2   | Latest         | >= 2.4.1, <= 2.4.5-p1      | >= 7.2, <= 8.1 |	
+
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
 [latest-release-download]: https://github.com/saleslayer/magento-community-plugin/releases/latest/download/magento-community-plugin.zip
