@@ -63,14 +63,23 @@ php bin/magento cache:clean
 
 ## Version Guidance
 
-| Version         | Status         | Magento Version (Open Source) | PHP Version    |
-|-----------------|----------------|-------------------------------|----------------|
-| 2.5.x           | EOL            | >= 2.4.1, <= 2.4.3            | 7.1, 7.2, 7.3  |
-| 2.6.0 - 2.6.1   |                | >= 2.4.1, <= 2.4.5-p1         | >= 7.2, <= 8.1 |
-| 2.6.2           | Latest         | >= 2.4.1, <= 2.4.5-p1         | >= 7.2, <= 8.1 |	
+| Version | Status         | Magento Version (Open Source) | Recommended Configuration  |
+|---------|----------------|-------------------------------|----------------------------|
+| 2.5.x   | EOL            | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
+| 2.6.0   | Stable         | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
+| 2.6.1   | Stable         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
+| 2.6.2   | Latest         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |	
+
+> **Warning**.
+> Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
+
+> **Note**. 
+> See also [Magento system requirements][magento-system-requirements] for the right environment choice.
+
 
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
 [latest-release-download]: https://github.com/saleslayer/magento-community-plugin/releases/latest/download/magento-community-plugin.zip
 [changelog-md]: https://github.com/saleslayer/magento-community-plugin/blob/master/CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
+[magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
