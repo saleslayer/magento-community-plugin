@@ -261,7 +261,7 @@ class Autosynccron extends Synccatalog{
                         if ($connector['auto_sync'] > 0){
                             
                             $connector_last_sync = $connector['last_sync'];
-                            $connector_last_sync_unix = strtotime($connector_last_sync);
+                            $connector_last_sync_unix = strtotime($connector_last_sync ?? 0);
                             
                             $unix_to_update = $now - ($connector['auto_sync'] * 3600);
                             
@@ -275,9 +275,10 @@ class Autosynccron extends Synccatalog{
                                 if ($connector['auto_sync'] >= 24){
                                     
                                     $unix_to_update_hour = mktime($connector['auto_sync_hour'],0,0,date('m', $unix_to_update),date('d', $unix_to_update),date('Y', $unix_to_update));
-                                    
-                                    if ($connector_last_sync_unix < $unix_to_update_hour){
-                                    
+                                  
+                                    if ($connector_last_sync_unix < $unix_to_update &&
+                                        $unix_to_update_hour <= $now){
+
                                         $connector['unix_to_update'] = $unix_to_update_hour;
                                         $connectors_to_check[] = $connector;
 
@@ -304,9 +305,9 @@ class Autosynccron extends Synccatalog{
 
                             if ($connector['auto_sync'] >= 24){
 
-                                $last_sync_time = mktime($connector['auto_sync_hour'],0,0,date('m', $now),date('d', $now),date('Y', $now));
+                                $last_sync_time = $connector['unix_to_update'];
                                 $last_sync = date('Y-m-d H:i:s', $last_sync_time);
-                            
+
                             }else{
                             
                                 $last_sync = date('Y-m-d H:i:s');

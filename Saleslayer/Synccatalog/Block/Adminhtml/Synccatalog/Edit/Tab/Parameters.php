@@ -83,6 +83,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
         if (!empty($modelData['last_sync'])){
             $last_sync_timezoned = $this->timezone->date($modelData['last_sync'])->format('M d, Y, H:i:s A');
             $datetime_last_sync = "<br><small>Connector's last auto-synchronization: ".$last_sync_timezoned."</small>";
+            $datetime_last_sync .= "<br><small><strong>*Note: This synchronization will be executed according to the server time.</strong></small>";
         }
 
         $fieldset->addField(
