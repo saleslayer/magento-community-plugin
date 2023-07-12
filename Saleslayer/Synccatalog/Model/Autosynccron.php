@@ -305,8 +305,7 @@ class Autosynccron extends Synccatalog{
 
                             if ($connector['auto_sync'] >= 24){
 
-                                $last_sync_time = $connector['unix_to_update'];
-                                $last_sync = date('Y-m-d H:i:s', $last_sync_time);
+                                $last_sync = date('Y-m-d H:i:s', $connector['unix_to_update']);
 
                             }else{
                             
