@@ -1090,11 +1090,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $this->return_response = [];
         $info_processed = false;
 
-        $page = 0;
-
         do{
 
-            $page++;
             $pagination_response_data = $slconn->get_response_table_data();
             
             $is_next_page = false;
@@ -2047,7 +2044,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         }
 
         $time_ini_format_url_key = microtime(1);
-        $sl_category_data_to_sync['url_key'] = $this->categoryModel->formatUrlKey($sl_category_data_to_sync['url_key']);
+        $sl_category_original_url_key = $this->categoryModel->formatUrlKey($sl_category_data_to_sync['url_key']);
         if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_format_url_key: ', 'timer', (microtime(1) - $time_ini_format_url_key));
 
         if ($this->sl_DEBBUG > 1) $this->slDebuger->debug('## sync_category_prepare_data: ', 'timer', (microtime(1) - $time_ini_sync_category_prepare_data));
@@ -2057,6 +2054,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         foreach ($store_view_ids as $store_view_id) {
             
             $this->slDebuger->debug(" > In store view id: ".$store_view_id);
+
+            $time_ini_get_valid_url_key = microtime(1);
+            $sl_category_data_to_sync['url_key'] = $this->getValidCategoryUrlKey($sl_category_original_url_key, $store_view_id);
+            if ($sl_category_data_to_sync['url_key'] !== $sl_category_original_url_key){
+                $this->slDebuger->debug(" > SL category url key to sync: ".$sl_category_data_to_sync['url_key'].' in store view id: '.$store_view_id);
+            }
+            if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('# time_get_valid_url_key: ', 'timer', (microtime(1) - $time_ini_get_valid_url_key));
+
             $time_ini_sync_category_store_data = microtime(1);
             $this->setValues($this->mg_category_id, 'catalog_category_entity', $sl_category_data_to_sync, $this->category_entity_type_id, $store_view_id, true);
             if ($this->sl_DEBBUG > 1) $this->slDebuger->debug('## sync_category_data store_view_id: '.$store_view_id.': ', 'timer', (microtime(1) - $time_ini_sync_category_store_data));
@@ -2088,13 +2093,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
             $time_ini_category_url_rewrite_store = microtime(1);
 
-            $mg_category_fields = array('url_key' => '', 'url_path' => '');
-            $mg_category_fields = $this->getValues($this->mg_category_id, 'catalog_category_entity', $mg_category_fields, $this->category_entity_type_id, $store_view_id);
-            
+            $mg_category_fields = $this->getValues($this->mg_category_id, 'catalog_category_entity', ['url_key' => '', 'url_path' => ''], $this->category_entity_type_id, $store_view_id);
             if (!isset($mg_category_fields['url_key']) || isset($mg_category_fields['url_key']) && $mg_category_fields['url_key'] == ''){
-
-                $this->slDebuger->debug('## Error. Url Key not found in store: '.$store_view_id.' for category with MG ID: '.$this->mg_category_id.'. Skipping category url rewrite update.');
-                continue;
+                
+                $mg_category_fields = $this->getValues($this->mg_category_id, 'catalog_category_entity', ['url_key' => '', 'url_path' => ''], $this->category_entity_type_id, 0);
+                if (!isset($mg_category_fields['url_key']) || isset($mg_category_fields['url_key']) && $mg_category_fields['url_key'] == ''){
+                 
+                    $this->slDebuger->debug('## Error. Url Key not found in store: '.$store_view_id.' for category with MG ID: '.$this->mg_category_id.'. Skipping category url rewrite update.');
+                    continue;
+                
+                }
 
             }
 
@@ -3281,13 +3289,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
             $time_ini_product_url_rewrite_store = microtime(1);
 
-            $mg_product_fields = array('url_key' => '', 'url_path' => '');
-            $mg_product_fields = $this->getValues($this->mg_product_id, 'catalog_product_entity', $mg_product_fields, $this->product_entity_type_id, $store_view_id);
-            
+            $mg_product_fields = $this->getValues($this->mg_product_id, 'catalog_product_entity', ['url_key' => '', 'url_path' => ''], $this->product_entity_type_id, $store_view_id);
             if (!isset($mg_product_fields['url_key']) || isset($mg_product_fields['url_key']) && $mg_product_fields['url_key'] == ''){
-
-                $this->slDebuger->debug('## Error. Url Key not found in store: '.$store_view_id.' for product with MG ID: '.$this->mg_product_id.'. Skipping product url rewrite update.');
-                continue;
+                
+                $mg_product_fields = $this->getValues($this->mg_product_id, 'catalog_product_entity', ['url_key' => '', 'url_path' => ''], $this->product_entity_type_id, 0);
+                if (!isset($mg_product_fields['url_key']) || isset($mg_product_fields['url_key']) && $mg_product_fields['url_key'] == ''){
+                 
+                    $this->slDebuger->debug('## Error. Url Key not found in store: '.$store_view_id.' for product with MG ID: '.$this->mg_product_id.'. Skipping product url rewrite update.');
+                    continue;
+                
+                }
 
             }
 
@@ -4400,21 +4411,23 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!$image_value_id) $image_value_id = 1;
 
-            $media_gallery_attribute = $this->getAttribute('media_gallery', $this->product_entity_type_id);
-       
-            $gallery_table_data = [
-                'value_id'          => $image_value_id,
-                'attribute_id'      => $media_gallery_attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID],
-                'value'             => $image_name_to_check,
-                'media_type'        => ImageEntryConverter::MEDIA_TYPE_CODE,
-                'disabled'          => 0,
-            ];
-            
-            $this->slConnection->slDBInsertOnDuplicate(
-                $galleryTable, 
-                $gallery_table_data, 
-                array_keys($gallery_table_data)
-            );
+            if (($media_gallery_attribute = $this->getAttribute('media_gallery', $this->product_entity_type_id)) !== false){
+
+                $gallery_table_data = [
+                    'value_id'          => $image_value_id,
+                    'attribute_id'      => $media_gallery_attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID],
+                    'value'             => $image_name_to_check,
+                    'media_type'        => ImageEntryConverter::MEDIA_TYPE_CODE,
+                    'disabled'          => 0,
+                ];
+                
+                $this->slConnection->slDBInsertOnDuplicate(
+                    $galleryTable, 
+                    $gallery_table_data, 
+                    array_keys($gallery_table_data)
+                );
+
+            }
             
         }
 
@@ -6499,13 +6512,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 try{
 
                     //Reorganize categories under this
-                    $is_active_attribute = $this->getAttribute('is_active', $this->category_entity_type_id);
-
-                    if (empty($is_active_attribute)){
-                        return 'item_deleted';
-                    }
-
-                    if (!isset($is_active_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])) {
+                    if (($is_active_attribute = $this->getAttribute('is_active', $this->category_entity_type_id)) === false){
                         return 'item_deleted';
                     }
 
@@ -6999,17 +7006,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function loadSaleslayerRootCategory(){
 
-        $name_attribute = $this->getAttribute('name', $this->category_entity_type_id);
-
-        if (empty($name_attribute)){
-            $this->slDebuger->debug('## Error. Category name attribute does not exist, please correct this.');
-            return false;
-        }
-
-        if (!isset($name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])) {
-            $this->slDebuger->debug('## Error. Category name attribute does not have a backend type, please correct this.');
-            return false;
-        }
+        if (($name_attribute = $this->getAttribute('name', $this->category_entity_type_id)) === false) return false;
 
         $category_table = $this->slConnection->getTable('catalog_category_entity');
         $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
@@ -8302,40 +8299,30 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     }
 
     /**
-     * Function to find a category by name and if it's not assigned, assign it with the Sales Layer category id.
-     * @param string $category_name             category name
-     * @param int $saleslayer_id                Sales Layer category id
-     * @param int $store_view_id                store view id to search 
-     * @return int $category_id                 Magento category id
+     * Function to find a category by URL Key and if it's not assigned, assign it with the Sales Layer category ID.
+     * @param string $category_url_key          category url key
+     * @param int $saleslayer_id                SL category ID
+     * @param int $store_view_id                store view ID to search 
+     * @return bool
      */
-    private function assignSaleslayerCategoryByName($category_name, $saleslayer_id, $store_view_id = 0) {
-
-        $name_attribute = $this->getAttribute('name', $this->category_entity_type_id);
-
-        if (empty($name_attribute)){
-            $this->slDebuger->debug('## Error. Category name attribute does not exist, please correct this.');
-            return false;
-        }
-
-        if (!isset($name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])) {
-            $this->slDebuger->debug('## Error. Category name attribute does not have a backend type, please correct this.');
-            return false;
-        }
+    private function assignSLCategoryByUrlKey($category_url_key, $saleslayer_id, $store_view_id = 0){
+        
+        if (($url_key_attribute = $this->getAttribute('url_key', $this->category_entity_type_id)) === false) return false;
 
         $category_table = $this->slConnection->getTable('catalog_category_entity');
-        $category_name_table = $this->slConnection->getTable('catalog_category_entity_' . $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+        $category_url_key_table = $this->slConnection->getTable('catalog_category_entity_' . $url_key_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
         $category_saleslayer_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_id_attribute_backend_type);
         $category_saleslayer_comp_id_table = $this->slConnection->getTable('catalog_category_entity_' . $this->category_saleslayer_comp_id_attribute_backend_type);
-        
+                
         $categories_data = $this->connection->fetchAll(
             $this->connection->select()
                 ->from(
-                   ['c1' => $category_name_table],
+                    ['c1' => $category_url_key_table],
                     ['entity_id' => 'c1.entity_id',
-                    'saleslayer_id' => 'c1.value']
+                    'url_key' => 'c1.value']
                 )
-                ->where('c1.attribute_id' . ' = ?', $name_attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
-                ->where('c1.value' . ' = ?', $category_name)
+                ->where('c1.attribute_id' . ' = ?', $url_key_attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                ->where('c1.value' . ' = ?', $category_url_key)
                 ->where('c1.store_id' . ' = ?', $store_view_id)
                 ->where('c4.level > 1')
                 ->joinLeft(
@@ -8348,24 +8335,27 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     'c1.entity_id = c3.entity_id AND c1.store_id = c3.store_id AND c3.attribute_id = '.$this->category_saleslayer_comp_id_attribute,
                     ['saleslayer_comp_id' => 'c3.value']
                 )
-                ->joinLeft(
+                ->joinRight(
                     ['c4' => $category_table], 
                     'c1.entity_id = c4.entity_id',
-                    ['path','parent_id']
+                    ['path', 'entity_id', 'parent_id']
                 )
                 ->group('c1.entity_id')
         );
-
+        
         if (!empty($categories_data)){
 
             $category_id_found = $category_id_found_temp = 0;
             
             foreach ($categories_data as $category_data) {
+        
+                if ((isset($category_data['saleslayer_id']) && 
+                    !in_array($category_data['saleslayer_id'], array(0, '', null))) && 
+                    (isset($category_data['saleslayer_comp_id']) && 
+                    !in_array($category_data['saleslayer_comp_id'], array(0, '', null)))){
 
-                if ((isset($category_data['saleslayer_id']) && !in_array($category_data['saleslayer_id'], array(0, '', null))) && (isset($category_data['saleslayer_comp_id']) && !in_array($category_data['saleslayer_comp_id'], array(0, '', null)))){
-                    
                     continue;
-                    
+
                 }
                             
                 $path = $category_data['path'];
@@ -8393,7 +8383,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         }else if ($category_id_found_temp == 0){
 
                             $category_id_found_temp = $category_data['entity_id'];
-                            
+                    
                         }
 
                     }
@@ -8403,7 +8393,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             }
 
             if ($category_id_found == 0 && $category_id_found_temp !== 0) $category_id_found = $category_id_found_temp;
-
+            
             if ($category_id_found !== 0){
 
                 $sl_credentials = array('is_active' => 1, 'saleslayer_id' => $saleslayer_id, 'saleslayer_comp_id' => $this->comp_id);
@@ -8418,6 +8408,84 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         return false;
 
+    }
+
+    /**
+     * Function to get a valid category URL Key.
+     * @param string $original_url_key          original category URL Key
+     * @param int $store_view_id                store view id to search 
+     * @return string                           non duplicated URL Key
+     */
+    private function getValidCategoryUrlKey($original_url_key, $store_view_id = 0){
+
+        if (($url_key_attribute = $this->getAttribute('url_key', $this->category_entity_type_id)) === false) return $original_url_key;
+
+        $category_table = $this->slConnection->getTable('catalog_category_entity');
+        $category_url_key_table = $this->slConnection->getTable('catalog_category_entity_' . $url_key_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE]);
+        
+        $new_url_key = $original_url_key;
+        $valid_url_key = false;
+        $increment = 1;
+
+        do{
+
+            $categories_data = $this->connection->fetchAll(
+                $this->connection->select()
+                    ->from(
+                       ['c1' => $category_url_key_table],
+                        ['entity_id' => 'c1.entity_id',
+                        'url_key' => 'c1.value']
+                    )
+                    ->where('c1.attribute_id' . ' = ?', $url_key_attribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_ID])
+                    ->where('c1.value' . ' = ?', $new_url_key)
+                    ->where('c1.store_id' . ' = ?', $store_view_id)
+                    ->where('c2.level > 1')
+                    ->where('c2.parent_id' . ' = ?', $this->mg_parent_category_id)
+                    ->joinRight(
+                        ['c2' => $category_table], 
+                        'c1.entity_id = c2.entity_id',
+                        ['path', 'entity_id', 'parent_id']
+                    )
+                    ->group('c1.entity_id')
+            );
+
+            if (!empty($categories_data)){
+
+                $category_found = false;
+
+                foreach ($categories_data as $category_data) {
+            
+                    if ($this->mg_category_id == $category_data['entity_id']){
+
+                        //Url Key is in the same category
+                        return $new_url_key;
+
+                    }else{
+
+                        //Url key is on another linked category
+                        break;
+
+                    }
+    
+                }
+                
+                if (!$valid_url_key){
+    
+                    $new_url_key = $original_url_key.'-sl-'.$increment;
+                    $increment++;
+                    
+                }
+
+            }else{
+
+                $valid_url_key = true;
+
+            }
+
+        }while(!$valid_url_key);
+
+        return $new_url_key;
+        
     }
 
     /**
@@ -8488,15 +8556,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (isset($category['data'][$this->category_field_name]) && $category['data'][$this->category_field_name] != ''){
 
-                $sl_name = $category['data'][$this->category_field_name];
-                $category_assigned = $this->assignSaleslayerCategoryByName($sl_name, $sl_id);
+                $url_key = $this->categoryModel->formatUrlKey($category['data'][$this->category_field_name]);
+                $category_assigned = $this->assignSLCategoryByUrlKey($url_key, $sl_id);
 
             }else{
 
                 $category_assigned = false;
 
             }
-            
           
             if ($category_assigned){
 
@@ -8993,7 +9060,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      */
     private function getValues($entityId, $entityTable, $values, $entityTypeId, $storeId = 0){
         
-        $values_to_return  = [];
+        $values_to_return = [];
         $values_codes = array_keys($values);
 
         foreach ($values_codes as $code) {
@@ -9683,13 +9750,30 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 ->limit(1)
         );
 
-        if (empty($attribute)) {
+        if (!empty($attribute) && isset($attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])){
+
+            return $attribute;
+
+        }else{
+
+            $prev_error_message = '';
+            if ($entityTypeId == 3) $prev_error_message = 'Category ';
+            if ($entityTypeId == 4) $prev_error_message = 'Product ';
+
+            if (empty($attribute)){
+
+                $this->slDebuger->debug('## Error. '.$prev_error_message.$code.' attribute does not exist, please correct this.');
+            
+            }else{
+            
+                $this->slDebuger->debug('## Error. '.$prev_error_message.$code.' attribute does not have a backend type, please correct this.');
+            
+            }
 
             return false;
 
         }
 
-        return $attribute;
     }
 
     /**

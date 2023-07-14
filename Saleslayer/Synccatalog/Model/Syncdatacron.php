@@ -523,33 +523,32 @@ class Syncdatacron extends Synccatalog{
         
         do{
 
-            $items_to_update = $this->connection->fetchAll(
-                $this->connection->select()
-                    ->from(
-                       $this->slConnection->getTable($this->saleslayer_syncdata_table)
-                    )
-                    ->where("sync_type = 'update'")
-                    ->where("item_type = ? ", $index)
-                    ->where('sync_tries <= 2')
-                    ->order('sync_tries ASC')
-                    ->order('level ASC')
-                    ->order('id ASC')
-                    ->limit(5)
-            );
-
             if ($this->test_one_item !== false && is_numeric($this->test_one_item)){
 
                 $items_to_update = $this->connection->fetchAll(
                     $this->connection->select()
-                        ->from(
+                    ->from(
                            $this->slConnection->getTable($this->saleslayer_syncdata_table)
                         )
                         ->where("sync_type = 'update'")
-                        ->where("item_type = ? ", $this->test_one_item)
+                        ->where("id = ? ", $this->test_one_item)
+                        ->limit(1)
+                    );
+
+            }else{
+                
+                $items_to_update = $this->connection->fetchAll(
+                    $this->connection->select()
+                        ->from(
+                            $this->slConnection->getTable($this->saleslayer_syncdata_table)
+                        )
+                        ->where("sync_type = 'update'")
+                        ->where("item_type = ? ", $index)
                         ->where('sync_tries <= 2')
                         ->order('sync_tries ASC')
+                        ->order('level ASC')
                         ->order('id ASC')
-                        ->limit(1)
+                        ->limit(5)
                 );
 
             }
