@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.6.3] - 2023-07-13
+
+### Added
+
+- Function to obtain a non-used category URL Key when synchronizing category data on each store.
+
+### Changed
+
+- Auto Sync correction for connectors configured with 24h or more.
+- Category assignation changed from name to URL Key.
+- Minor fixes.
+
+### Tested
+
+- Tested on Magento 2.4.5-p1 / PHP 8.1 
+
 ## [2.6.2] - 2023-06-02
 
 ### Added
