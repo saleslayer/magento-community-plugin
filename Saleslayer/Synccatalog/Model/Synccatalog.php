@@ -10390,6 +10390,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             return $items_processing;
 
         }
+        
+        return false;
 
     }
 
