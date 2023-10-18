@@ -35,9 +35,17 @@ Please check the [important notes] for the installation. (In some cases, a Sales
 
 ## How To Start
 
-### 1. Install the package your Magento 
+### 1. Module package install process
 
-#### 1.1 Uncompress module into Magento root folder 'app/code'
+#### 1.1 Install the package in your Magento
+
+##### 1.1.1 Automatically, from composer. In your Magento root folder, execute command:
+
+```
+composer require saleslayer/magento-community-plugin
+```
+
+##### 1.1.2 Manually. Download the latest version zip and uncompress it into your Magento root folder 'app/code'
 
 #### 1.2 From Magento root folder execute commands:
 
