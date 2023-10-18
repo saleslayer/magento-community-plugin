@@ -75,8 +75,8 @@ php bin/magento cache:clean
 |-----------------|----------------|-------------------------------|----------------------------|
 | 2.5.x           | EOL            | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
 | 2.6.0           | EOL            | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
-| 2.6.1 - 2.6.2   | Stable         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
-| 2.6.3           | Latest         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |	
+| 2.6.1 - 2.6.3   | EOL            | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
+| 2.7.0           | Latest         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
