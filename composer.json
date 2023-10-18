@@ -29,7 +29,6 @@
     }],
     "support": {
         "email": "connectors@saleslayer.com"
-    },
-    "minimum-stability": "stable"
+    }
   }
   
