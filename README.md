@@ -17,7 +17,7 @@ Check out the latest changes at our [changelog][changelog-md].
 
 ## Important Notes
 
-Please check the [important notes] for the installation. (In some cases, a Sales Layer account might be needed to access the documentation)
+Please check the [important notes] for the installation. (In some cases, a Sales Layer account might be needed to access the documentation).
 
 ## Requirements
 
@@ -37,18 +37,50 @@ Please check the [important notes] for the installation. (In some cases, a Sales
 
 ### 1. Module package install process
 
-#### 1.1 Install the package in your Magento
+#### 1.1 Download the package in your Magento
 
 > **Warning**.
 > Install the plugin only automatically or manually. If you try to install it with both methods at the same time, in step 1.2 Magento will return an error.
 
-##### 1.1.1 Automatically, from composer. In your Magento root folder, execute command:
+##### 1.1.1 Via Composer. In your Magento root folder, execute command:
+```
+composer require saleslayer/magento-community-plugin
+```
+See [install extensions on Magento Open Source][magento-install-extensions] for more info.
 
+> **Info**
+> If you have a previous version of the plugin installed in root folder 'app/code', please delete the complete folder of the plugin before moving forward with the plugin's installation via Composer.
+
+Once executed and installed, the plugin will be found in your Magento installation root path, inside the folder 'vendor/saleslayer/magento-community-plugin/
+
+##### 1.1.1.1 Composer command examples
+To install the latest latest valid version of the main branch: 
 ```
 composer require saleslayer/magento-community-plugin
 ```
 
+To install the latest valid version having the 2.7.* tag (the number of version can be changed to any tag number that includes Composer): 
+```
+composer require saleslayer/magento-community-plugin "2.7.*" 
+```
+
+Branch feature-295 will be installed (the branch name can be changed to any branch that includes Composer):
+```
+composer require saleslayer/magento-community-plugin:dev-feature_295
+```
+
+##### 1.1.1.2 Composer requirements
+Following Version guidance, check the plugin version to check which PHP and Magento version are required to install the plugin.
+
+In case a requirement is not met, an error will be given by Composer.
+
+> **Info**
+> This will only happen if your Magento installation doesn’t met the requirements of the specific branch or tag version being installed, or by default, none of the main branch releases.  
+
 ##### 1.1.2 Manually. Download the latest version zip and uncompress it into your Magento root folder 'app/code'
+
+> **Warning**.
+> Since plugin 2.7.0 version, this method will be deprecated. We strongly recommend to install the plugin via Composer. See step 1.1.1.
 
 #### 1.2 From Magento root folder execute commands:
 
@@ -74,12 +106,12 @@ php bin/magento cache:clean
 
 ## Version Guidance
 
-| Version         | Status         | Magento Version (Open Source) | Recommended Configuration  |
-|-----------------|----------------|-------------------------------|----------------------------|
-| 2.5.x           | EOL            | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
-| 2.6.0           | EOL            | >= 2.1.4, <= 2.4.0            | Magento 2.4.0 / PHP 7.3    |
-| 2.6.1 - 2.6.3   | EOL            | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
-| 2.7.0           | Latest         | >= 2.1.4, <= 2.4.5            | Magento 2.4.5-p1 / PHP 8.1 |
+| Version       | Status | Magento Version (Open Source) | PHP       | Recommended Configuration  |
+|---------------|--------|-------------------------------|-----------|----------------------------|
+| 2.5.x - 2.6.0 | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
+| 2.6.1 - 2.6.2 | EOL    | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
+| 2.6.3         | Stable | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
+| 2.7.0         | Latest | >= 2.4.5, < 2.4.6             | 8.1       | Magento 2.4.5-p1 / PHP 8.1 |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
@@ -94,3 +126,4 @@ php bin/magento cache:clean
 [changelog-md]: https://github.com/saleslayer/magento-community-plugin/blob/master/CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
 [magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
+[magento-install-extensions]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/tutorials/extensions.html?lang=en
