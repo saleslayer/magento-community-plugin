@@ -32,6 +32,7 @@ use Magento\Catalog\Model\Product\Attribute\Backend\Media\ImageEntryConverter;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
@@ -64,6 +65,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
     protected $typeListInterface;
     protected $countryOfManufacture;
     protected $layoutSource;
+    protected $stockRegistryInterface;
     protected $salesLayerConn;
     protected $connection;
     protected $directoryListFilesystem;
@@ -307,6 +309,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
      * @param typeListInterface                   $typeListInterface                   \Magento\Framework\App\Cache\TypeListInterface
      * @param countryOfManufacture                $countryOfManufacture                \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture
      * @param layoutSource                        $layoutSource                        \Magento\Catalog\Model\Category\Attribute\Source\Layout
+     * @param stockRegistryInterface              $stockRegistryInterface              \Magento\CatalogInventory\Api\StockRegistryInterface
      * @param resource|null                       $resource                            \Magento\Framework\Model\ResourceModel\AbstractResource
      * @param resourceCollection|null             $resourceCollection                  \Magento\Framework\Data\Collection\AbstractDb
      * @param productRepository                   $productRepository                   \Magento\Catalog\Api\ProductRepositoryInterface
@@ -339,6 +342,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         typeListInterface $typeListInterface,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
+        stockRegistryInterface $stockRegistryInterface,
         productRepository $productRepository,
         resource $resource = null,
         resourceCollection $resourceCollection = null,
@@ -370,6 +374,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
         $this->typeListInterface                        = $typeListInterface;
         $this->countryOfManufacture                     = $countryOfManufacture;
         $this->layoutSource                             = $layoutSource;
+        $this->stockRegistryInterface                   = $stockRegistryInterface;
         $this->connection                               = $this->resourceConnection->getConnection();
 
     }
@@ -2921,46 +2926,32 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
     /**
      * Function to update item stock.
-     * @param int $item_id                  item id to update stock
-     * @param boolean $sl_qty               stock to update, if false will check and update stock tables
+     * @param int $item_id                          item id to update stock
+     * @param array $sl_inventory_data               stock data to update
      * @return void
      */
-    private function update_item_stock($item_id, $sl_inventory_data = []){
+    private function updateItemStock($item_id, $sl_inventory_data = []){
 
         $manage_stock = $this->config_manage_stock;
         $is_in_stock = 0;
-        $use_config_manage_stock = $use_config_backorders = $use_config_min_sale_qty = $use_config_max_sale_qty = 1;
-
         $sl_backorders = $this->config_backorders;
         $sl_min_sale_qty = $this->config_min_sale_qty;
         $sl_max_sale_qty = $this->config_max_sale_qty;
-    
-        $mg_product_core_data = $this->get_product_core_data($item_id);
-     
-        $cataloginventory_stock_item_table = $this->slConnection->getTable('cataloginventory_stock_item');
-        $stock_id = new Expr(1);
-
-        $mg_existing_stock = $this->connection->fetchRow(
-            $this->connection->select()
-                ->from(
-                    $cataloginventory_stock_item_table
-                )
-                ->where('product_id = ?', $item_id)
-                ->where('stock_id = ?', $stock_id)
-                ->limit(1)
-        );
-
-        $sl_qty = $mg_existing_stock['qty'] ?? 0;
-
+        $use_config_manage_stock = $use_config_backorders = $use_config_min_sale_qty = $use_config_max_sale_qty = 1;
         $avoid_stock_update = $avoid_backorders_update = $avoid_min_sale_qty_update = $avoid_max_sale_qty_update = false;
+
+        $mg_product_core_data = $this->get_product_core_data($item_id);
+       
+        $item_stock = $this->stockRegistryInterface->getStockItem($item_id);
+        $item_stock_data = $item_stock->getData();
+
+        $sl_qty = null;
 
         if (isset($sl_inventory_data['sl_qty']) && $sl_inventory_data['sl_qty'] !== ''){
 
             $sl_qty = intval($sl_inventory_data['sl_qty']);
-
-            if ($sl_qty > 0) {
-                $is_in_stock = 1;
-            }
+       
+            if ($sl_qty > 0) $is_in_stock = 1; 
 
             if ($mg_product_core_data['type_id'] == $this->product_type_configurable){
 
@@ -2968,9 +2959,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 
             }else{
 
-                if ($sl_qty > 0) {
-                    $manage_stock = 1;
-                }
+                if ($sl_qty > 0) $manage_stock = 1;
                 
             }
 
@@ -3019,33 +3008,39 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
         $default_website_id = $this->catalogInventoryConfiguration->getDefaultScopeId();
 
-        if (!empty($mg_existing_stock)){
-    
-            $stock_data_to_update = [];
+        if (!empty($item_stock_data)){
+
+            if ($sl_qty === null) $sl_qty = $item_stock_data['qty'] ?? 0;
+            
+            $item_stock_to_update = false;
 
             if (!$avoid_stock_update){
 
-                if ($sl_qty != $mg_existing_stock['qty']){
+                if ($sl_qty != $item_stock_data['qty']){
 
-                    $stock_data_to_update['qty'] = $sl_qty;
-
-                }
-
-                if ($is_in_stock != $mg_existing_stock['is_in_stock']){
-
-                    $stock_data_to_update['is_in_stock'] = $is_in_stock;
+                    $item_stock->setData('qty', $sl_qty);
+                    $item_stock_to_update = true;
 
                 }
 
-                if ($manage_stock != $mg_existing_stock['manage_stock']){
+                if ($is_in_stock != $item_stock_data['is_in_stock']){
 
-                    $stock_data_to_update['manage_stock'] = $manage_stock;
+                    $item_stock->setData('is_in_stock', $is_in_stock);
+                    $item_stock_to_update = true;
 
                 }
 
-                if ($use_config_manage_stock != $mg_existing_stock['use_config_manage_stock']){
+                if ($manage_stock != $item_stock_data['manage_stock']){
 
-                    $stock_data_to_update['use_config_manage_stock'] = $use_config_manage_stock;
+                    $item_stock->setData('manage_stock', $manage_stock);
+                    $item_stock_to_update = true;
+
+                }
+
+                if ($use_config_manage_stock != $item_stock_data['use_config_manage_stock']){
+
+                    $item_stock->setData('use_config_manage_stock', $use_config_manage_stock);
+                    $item_stock_to_update = true;
 
                 }
 
@@ -3053,15 +3048,17 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!$avoid_backorders_update){
                 
-                if ($sl_backorders != $mg_existing_stock['backorders']){
+                if ($sl_backorders != $item_stock_data['backorders']){
 
-                    $stock_data_to_update['backorders'] = $sl_backorders;
+                    $item_stock->setData('backorders', $sl_backorders);
+                    $item_stock_to_update = true;
 
                 }
 
-                if ($use_config_backorders != $mg_existing_stock['use_config_backorders']){
+                if ($use_config_backorders != $item_stock_data['use_config_backorders']){
 
-                    $stock_data_to_update['use_config_backorders'] = $use_config_backorders;
+                    $item_stock->setData('use_config_backorders', $use_config_backorders);
+                    $item_stock_to_update = true;
 
                 }
 
@@ -3069,15 +3066,17 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!$avoid_min_sale_qty_update){
 
-                if ($sl_min_sale_qty != $mg_existing_stock['min_sale_qty']){
+                if ($sl_min_sale_qty != $item_stock_data['min_sale_qty']){
 
-                    $stock_data_to_update['min_sale_qty'] = $sl_min_sale_qty;
+                    $item_stock->setData('min_sale_qty', $sl_min_sale_qty);
+                    $item_stock_to_update = true;
 
                 }
 
-                if ($use_config_min_sale_qty != $mg_existing_stock['use_config_min_sale_qty']){
+                if ($use_config_min_sale_qty != $item_stock_data['use_config_min_sale_qty']){
 
-                    $stock_data_to_update['use_config_min_sale_qty'] = $use_config_min_sale_qty;
+                    $item_stock->setData('use_config_min_sale_qty', $use_config_min_sale_qty);
+                    $item_stock_to_update = true;
 
                 }
 
@@ -3085,32 +3084,40 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!$avoid_max_sale_qty_update){
 
-                if ($sl_max_sale_qty != $mg_existing_stock['max_sale_qty']){
+                if ($sl_max_sale_qty != $item_stock_data['max_sale_qty']){
 
-                    $stock_data_to_update['max_sale_qty'] = $sl_max_sale_qty;
+                    $item_stock->setData('max_sale_qty', $sl_max_sale_qty);
+                    $item_stock_to_update = true;
 
                 }
 
-                if ($use_config_max_sale_qty != $mg_existing_stock['use_config_max_sale_qty']){
+                if ($use_config_max_sale_qty != $item_stock_data['use_config_max_sale_qty']){
 
-                    $stock_data_to_update['use_config_max_sale_qty'] = $use_config_max_sale_qty;
+                    $item_stock->setData('use_config_max_sale_qty', $use_config_max_sale_qty);
+                    $item_stock_to_update = true;
 
+                }
+
+            }
+
+            if ($item_stock_to_update){
+
+                try{
+                
+                    $item_stock->save();
+                    if ($this->sl_DEBBUG > 2) $this->slDebuger->debug('Updated item stock: '.print_r($item_stock->getData(),1));
+                
+                }catch(\Exception $e){
+                
+                    $this->slDebuger->debug('## Error. Updating item stock: '.$e->getMessage());
+                    return false;
+    
                 }
 
             }
             
-            if (!empty($stock_data_to_update)){
-
-                $this->slConnection->slDBUpdate(
-                    $cataloginventory_stock_item_table, 
-                    $stock_data_to_update, 
-                    'item_id = ' . $mg_existing_stock['item_id']
-                );
-
-            }
-
         }else{
-            
+
             if ($avoid_stock_update){
                 
                 $sl_qty = 0;
@@ -3124,7 +3131,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
             
             $values_to_insert = [
                 'product_id' => $item_id,
-                'stock_id' => $stock_id,
+                'stock_id' => new Expr(1),
                 'qty' => $sl_qty,
                 'is_in_stock' => $is_in_stock,
                 'low_stock_date' => new Expr('NULL'),
@@ -3141,6 +3148,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 'max_sale_qty' => $sl_max_sale_qty,
                 'use_config_max_sale_qty' => $use_config_max_sale_qty
             ];
+            
+            $cataloginventory_stock_item_table = $this->slConnection->getTable('cataloginventory_stock_item');
 
             $this->slConnection->slDBInsertOnDuplicate(
                 $cataloginventory_stock_item_table,
@@ -3148,110 +3157,28 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 array_keys($values_to_insert)
             );
 
-        }
-
-        if (!$avoid_stock_update){
-
-            $cataloginventory_stock_status_table = $this->slConnection->getTable('cataloginventory_stock_status');
-
-            $mg_existing_stock_status = $this->connection->fetchRow(
-                $this->connection->select()
-                    ->from(
-                        $cataloginventory_stock_status_table
-                    )
-                    ->where('product_id = ?', $item_id)
-                    ->where('stock_id = ?', $stock_id)
-                    ->where('website_id = ?', new Expr($default_website_id))
-                    ->limit(1)
-            );
-
-            if (!empty($mg_existing_stock_status)){
-            
-                $stock_status_data_to_update = [];
-
-                if ($sl_qty != $mg_existing_stock_status['qty']){
-
-                    $stock_status_data_to_update['qty'] = $sl_qty;
-
-                }
-
-                if ($is_in_stock != $mg_existing_stock_status['stock_status']){
-
-                    $stock_status_data_to_update['stock_status'] = $is_in_stock;
-
-                }
-
-                if (!empty($stock_status_data_to_update)){
-
-                    $this->slConnection->slDBUpdate(
-                        $cataloginventory_stock_status_table, 
-                        $stock_status_data_to_update, 
-                        ['product_id = ?' => $mg_existing_stock_status['product_id'], 
-                        'stock_id = ?' => $mg_existing_stock_status['stock_id'],
-                        'website_id = ?' => $mg_existing_stock_status['website_id']]
-                    );
-
-                }
-
-            }else{
-
+            if (!$avoid_stock_update){
+    
                 $values_to_insert = [
                     'product_id' => $item_id,
                     'website_id' => new Expr($default_website_id),
-                    'stock_id' => $stock_id,
+                    'stock_id' => new Expr(1),
                     'qty' => $sl_qty,
                     'stock_status' => $is_in_stock
                 ];
+
+                $cataloginventory_stock_status_table = $this->slConnection->getTable('cataloginventory_stock_status');
                 
                 $this->slConnection->slDBInsertOnDuplicate(
                     $cataloginventory_stock_status_table,
                     $values_to_insert,
                     array_keys($values_to_insert)
                 );
-
-            }
-
-            $inventory_source_item_table = $this->slConnection->getTable('inventory_source_item');
-
-            if (null !== $inventory_source_item_table){
-
-                $mg_existing_inventory_source_item = $this->connection->fetchRow(
-                    $this->connection->select()
-                        ->from(
-                            $inventory_source_item_table
-                        )
-                        ->where('sku = ?', $mg_product_core_data['sku'])
-                        ->limit(1)
-                );
-
-                if (!empty($mg_existing_inventory_source_item)){
-                
-                    $inventory_source_item_data_to_update = [];
-
-                    if ($sl_qty != $mg_existing_inventory_source_item['quantity']){
-
-                        $inventory_source_item_data_to_update['quantity'] = $sl_qty;
-
-                    }
-
-                    if ($is_in_stock != $mg_existing_inventory_source_item['status']){
-
-                        $inventory_source_item_data_to_update['status'] = $is_in_stock;
-
-                    }
-
-                    if (!empty($inventory_source_item_data_to_update)){
-
-                        $this->slConnection->slDBUpdate(
-                            $inventory_source_item_table, 
-                            $inventory_source_item_data_to_update, 
-                            'source_item_id = ' . $mg_existing_inventory_source_item['source_item_id']
-                        );
-
-                    }
-
-                }else{
-
+    
+                $inventory_source_item_table = $this->slConnection->getTable('inventory_source_item');
+    
+                if (null !== $inventory_source_item_table){
+    
                     $values_to_insert = [
                         'source_code' => 'default',
                         'sku' => $mg_product_core_data['sku'],
@@ -3264,9 +3191,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                         $values_to_insert,
                         array_keys($values_to_insert)
                     );
-
+    
                 }
-
+    
             }
 
         }
@@ -5194,7 +5121,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
                 if (!empty($sl_inventory_data)){
 
-                    $this->update_item_stock($this->mg_format_id, $sl_inventory_data);
+                    $this->updateItemStock($this->mg_format_id, $sl_inventory_data);
 
                 }
 
@@ -5832,7 +5759,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                 'entity_id = ' . $this->mg_product_id
             );
 
-            $this->update_item_stock($this->mg_product_id, array('sl_qty' => ''));
+            $this->updateItemStock($this->mg_product_id, ['sl_qty' => '']);
             
 
         }else{
@@ -5848,7 +5775,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                     'entity_id = ' . $this->mg_product_id
                 );
 
-                $this->update_item_stock($this->mg_product_id, array('sl_qty' => ''));
+                $this->updateItemStock($this->mg_product_id, ['sl_qty' => '']);
     
             }
 
@@ -6918,7 +6845,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
                                     'entity_id = ' . $relation_parent_id
                                 );
 
-                                $this->update_item_stock($relation_parent_id, array('sl_qty' => ''));
+                                $this->updateItemStock($relation_parent_id, ['sl_qty' => '']);
 
                             }
 
@@ -11406,7 +11333,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel{
 
             if (!empty($sl_inventory_data)){
 
-                $this->update_item_stock($this->mg_product_id, $sl_inventory_data);
+                $this->updateItemStock($this->mg_product_id, $sl_inventory_data);
 
             }
 

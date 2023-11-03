@@ -64,6 +64,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $slDebuger;
 
     /**
+     * @var \Magento\Eav\Api\Data\AttributeOptionLabelInterfaceFactory
+     */
+    protected $optionLabelFactory;
+
+    /**
+     * @var \Magento\Eav\Api\Data\AttributeOptionInterfaceFactory
+     */
+    protected $optionFactory;
+
+    /**
+     * @var \Magento\Eav\Api\AttributeOptionManagementInterface
+     */
+    protected $attributeOptionManagement;
+
+    /**
      * Data constructor.
      *
      * @param \Magento\Framework\App\Helper\Context $context

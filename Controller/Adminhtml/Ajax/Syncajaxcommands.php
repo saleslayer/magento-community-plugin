@@ -6,6 +6,7 @@ use Magento\Framework\Controller\ResultFactory;
 class Syncajaxcommands extends \Magento\Framework\App\Action\Action
 {
     protected $modelo;
+    protected $jsonHelper;
     /**
      * @var \Magento\Framework\UrlInterface
      */

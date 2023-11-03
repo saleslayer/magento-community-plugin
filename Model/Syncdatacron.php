@@ -24,6 +24,7 @@ use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
+use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
@@ -84,6 +85,7 @@ class Syncdatacron extends Synccatalog{
                 typeListInterface $typeListInterface,
                 countryOfManufacture $countryOfManufacture,
                 layoutSource $layoutSource,
+                stockRegistryInterface $stockRegistryInterface,
                 productRepository $productRepository,
                 resource $resource = null,
                 resourceCollection $resourceCollection = null,
@@ -114,6 +116,7 @@ class Syncdatacron extends Synccatalog{
                             $typeListInterface,
                             $countryOfManufacture,
                             $layoutSource,
+                            $stockRegistryInterface,
                             $productRepository,
                             $resource,
                             $resourceCollection,
