@@ -2,7 +2,7 @@
 
 # Sales Layer Magento Community plugin
 
-[![PHP Version](https://img.shields.io/badge/php-8.1%2C%208.2-8892BF.svg?style=flat-square)](https://php.net/) [![Magento Version](https://img.shields.io/badge/Magento-%3E%3D2.4.4%2C%20%3C2.4.7-AA92BF.svg?style=flat-square)](https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/composer.html?lang=en) [![GitHub release](https://img.shields.io/github/v/release/saleslayer/magento-community-plugin)](https://github.com/saleslayer/magento-community-plugin)
+[![PHP Version](https://img.shields.io/badge/php-8.1%2C%208.2-8892BF.svg?style=flat-square)](https://php.net/) [![Magento Version](https://img.shields.io/badge/Magento-%3E%3D2.4.4%2C%20%3C%3D2.4.6-AA92BF.svg?style=flat-square)](https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/composer.html?lang=en) [![GitHub release](https://img.shields.io/github/v/release/saleslayer/magento-community-plugin)](https://github.com/saleslayer/magento-community-plugin)
 
 This is the official Sales Layer's plugin for Magento Community (Open Source).
 
@@ -111,7 +111,7 @@ php bin/magento cache:clean
 | 2.5.x - 2.6.0 | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
 | 2.6.1 - 2.6.2 | EOL    | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
 | 2.6.3         | Stable | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
-| 2.7.0         | Latest | >= 2.4.4, < 2.4.7             | 8.1 - 8.2 | Magento 2.4.6-p3 / PHP 8.1 |
+| 2.7.0         | Latest | >= 2.4.4, <= 2.4.6            | 8.1 - 8.2 | Magento 2.4.6-p3 / PHP 8.1 |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
