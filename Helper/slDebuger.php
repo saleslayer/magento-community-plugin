@@ -15,6 +15,7 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
     protected $sl_DEBBUG                = 0;
     protected $sl_logs_folder_checked   = false;
     protected $sl_logs_path;
+    protected $sl_time_ini_process;
 
     /**
      * Debuger constructor.
