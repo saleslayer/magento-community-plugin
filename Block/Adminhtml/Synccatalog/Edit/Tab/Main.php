@@ -11,9 +11,9 @@ class Main extends \Magento\Backend\Block\Widget\Form\Generic implements \Magent
 
     /**
      * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Data\FormFactory $formFactory
-     * @param array $data
+     * @param \Magento\Framework\Registry             $registry
+     * @param \Magento\Framework\Data\FormFactory     $formFactory
+     * @param array                                   $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -34,7 +34,7 @@ class Main extends \Magento\Backend\Block\Widget\Form\Generic implements \Magent
         /* @var $model \Magento\Cms\Model\Page */
         $model = $this->_coreRegistry->registry('synccatalog');
 
-        /** @var \Magento\Framework\Data\Form $form */
+        /* @var \Magento\Framework\Data\Form $form */
         $form = $this->_formFactory->create();
 
         $form->setHtmlIdPrefix('synccatalog_main_');
@@ -47,7 +47,7 @@ class Main extends \Magento\Backend\Block\Widget\Form\Generic implements \Magent
 
         $modelData = $model->getData();
 
-        if (empty($modelData)){
+        if (empty($modelData)) {
             $isElementDisabled = false;
         }else{
             $isElementDisabled = true;

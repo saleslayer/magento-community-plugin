@@ -283,7 +283,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
             foreach ($attributes_tables as $attribute_table) {
 
-                if (strpos($attribute_table, '_text') !== false){
+                if (strpos($attribute_table, '_text') !== false) {
 
                     try{
 

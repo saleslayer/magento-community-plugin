@@ -11,7 +11,7 @@ class Save extends \Magento\Backend\App\Action
     protected $dataProcessor;
 
     /**
-     * @param Action\Context $context
+     * @param Action\Context    $context
      * @param PostDataProcessor $dataProcessor
      */
     public function __construct(Action\Context $context, PostDataProcessor $dataProcessor)
@@ -66,9 +66,9 @@ class Save extends \Magento\Backend\App\Action
 
                 $data_return = $model->store_sync_data($connector_id);
 
-                if (is_array($data_return)){
+                if (is_array($data_return)) {
                     
-                    if (!isset($data_return['storage_error'])){
+                    if (!isset($data_return['storage_error'])) {
 
                         $indexes = array('categories_to_delete', 'products_to_delete', 'product_formats_to_delete', 'categories_to_sync', 'products_to_sync', 'product_formats_to_sync');
 
@@ -76,11 +76,11 @@ class Save extends \Magento\Backend\App\Action
                         
                         foreach ($indexes as $idx){
 
-                            if (isset($data_return[$idx]) && $data_return[$idx] > 0){
+                            if (isset($data_return[$idx]) && $data_return[$idx] > 0) {
 
                                 $msg = $data_return[$idx];
 
-                                if (strpos($idx, 'delete') !== false){
+                                if (strpos($idx, 'delete') !== false) {
 
                                     ($delete_msg == '') ? $delete_msg = 'To delete: ' : $delete_msg .= ', ';
                                     $delete_msg .= $msg.' '.str_replace('_', ' ', substr($idx, 0, strpos($idx, '_to')));
@@ -96,12 +96,14 @@ class Save extends \Magento\Backend\App\Action
 
                         }
 
-                        if ($delete_msg != '' || $sync_msg != ''){
+                        if ($delete_msg != '' || $sync_msg != '') {
 
                             $this->messageManager->addSuccess(__('Sales Layer synchronization data stored successfully!'));
                             $this->messageManager->addSuccess(__('Total items stored: '));
-                            if ($delete_msg != ''){ $this->messageManager->addSuccess(__($delete_msg.'.')); }
-                            if ($sync_msg != ''){ $this->messageManager->addSuccess(__($sync_msg).'.'); }
+                            if ($delete_msg != '') { $this->messageManager->addSuccess(__($delete_msg.'.')); 
+                            }
+                            if ($sync_msg != '') { $this->messageManager->addSuccess(__($sync_msg).'.'); 
+                            }
 
                         }else{
 
@@ -132,7 +134,7 @@ class Save extends \Magento\Backend\App\Action
                 
                 $model->load($data['connector_id'], 'connector_id');
                 
-                if ($model->getId()){
+                if ($model->getId()) {
                     $this->messageManager->addError(__('The connector already exists.'));
                 }else{
 
@@ -150,7 +152,7 @@ class Save extends \Magento\Backend\App\Action
                         
                         $result_login = $model->login_saleslayer($connector_id, $secret_key);
 
-                        if ($result_login == 'login_ok'){
+                        if ($result_login == 'login_ok') {
 
                             $model->update_conn_field($connector_id, 'store_view_ids', $store_view_ids);
                             $model->update_conn_field($connector_id, 'format_configurable_attributes', $format_configurable_attributes);

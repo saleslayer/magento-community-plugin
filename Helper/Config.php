@@ -6,7 +6,10 @@ use \Magento\Framework\App\Helper\AbstractHelper;
 
 class Config extends AbstractHelper
 {
-    /** Config params */
+    /**
+* 
+ * Config params 
+*/
     const CONFIG_SYNCCATALOG_GENERAL_ACTIVATE_DEBUG_LOGS  = 'synccatalog/general/activate_debug_logs';
     const CONFIG_SYNCCATALOG_GENERAL_MANAGE_INDEXERS = 'synccatalog/general/manage_indexers';
     const CONFIG_SYNCCATALOG_GENERAL_SQL_TO_INSERT_LIMIT  = 'synccatalog/general/sql_to_insert_limit';
@@ -35,9 +38,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve debuger level option
+     *
      * @return int
      */
-    public function getDebugerLevel(){
+    public function getDebugerLevel()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_ACTIVATE_DEBUG_LOGS);
     
@@ -45,9 +50,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve manage indexers option
+     *
      * @return int
      */
-    public function getManageIndexers(){
+    public function getManageIndexers()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_MANAGE_INDEXERS);
     
@@ -55,9 +62,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve SQL to insert limit option
+     *
      * @return int
      */
-    public function getSqlToInsertLimit(){
+    public function getSqlToInsertLimit()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_SQL_TO_INSERT_LIMIT);
     
@@ -65,9 +74,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve API version
+     *
      * @return string
      */
-    public function getAPIVersion(){
+    public function getAPIVersion()
+    {
 
         return $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_API_VERSION);
     
@@ -75,9 +86,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve Pagination N items
+     *
      * @return int
      */
-    public function getPaginationNItems(){
+    public function getPaginationNItems()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_PAGINATION_N_ITEMS);
     
@@ -85,9 +98,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve avoid images updates option
+     *
      * @return int
      */
-    public function getAvoidImagesUpdates(){
+    public function getAvoidImagesUpdates()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_AVOID_IMAGES_UPDATES);
     
@@ -95,9 +110,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve sync data hour from option
+     *
      * @return int
      */
-    public function getSyncDataHourFrom(){
+    public function getSyncDataHourFrom()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_SYNC_DATA_HOUR_FROM);
     
@@ -105,9 +122,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve sync data hour until option
+     *
      * @return int
      */
-    public function getSyncDataHourUntil(){
+    public function getSyncDataHourUntil()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_SYNC_DATA_HOUR_UNTIL);
     
@@ -115,9 +134,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve format type creation option
+     *
      * @return string
      */
-    public function getFormatTypeCreation(){
+    public function getFormatTypeCreation()
+    {
 
         return (string) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_FORMAT_TYPE_CREATION);
     
@@ -125,9 +146,11 @@ class Config extends AbstractHelper
 
     /**
      * Retrieve delete SL logs since days option
+     *
      * @return int
      */
-    public function getDeleteSLLogsSinceDays(){
+    public function getDeleteSLLogsSinceDays()
+    {
 
         return (int) $this->scopeConfig->getValue(self::CONFIG_SYNCCATALOG_GENERAL_DELETE_SL_LOGS_SINCE_DAYS);
     

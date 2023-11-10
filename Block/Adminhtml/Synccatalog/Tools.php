@@ -12,8 +12,8 @@ class Tools extends \Magento\Backend\Block\Widget\Form\Container
 
     /**
      * @param \Magento\Backend\Block\Widget\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param array $data
+     * @param \Magento\Framework\Registry           $registry
+     * @param array                                 $data
      */
     public function __construct(
         \Magento\Backend\Block\Widget\Context $context,

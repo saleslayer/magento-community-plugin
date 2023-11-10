@@ -8,22 +8,32 @@ class View extends \Magento\Framework\View\Element\Template
 {
 
     /**
-     * Core registry
+     * Core registry model
      *
      * @var \Magento\Framework\Registry
      */
     protected $_coreRegistry = null;
 
-    /** @var \Saleslayer\Synccatalog\Helper\Data */
-    protected $_dataHelper;
+    /**
+     * Http context model
+     *
+     * @var \Magento\Framework\App\Http\Context
+     */
     protected $httpContext;
     
     /**
+     * Synccatalog Data helper
+     *
+     * @var \Saleslayer\Synccatalog\Helper\Data
+     */
+    protected $_dataHelper;
+
+    /**
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\App\Http\Context $httpContext
-     * @param \Magento\Payment\Helper\Data $paymentHelper
-     * @param array $data
+     * @param \Magento\Framework\Registry                      $registry
+     * @param \Magento\Framework\App\Http\Context              $httpContext
+     * @param \Saleslayer\Synccatalog\Helper\Data              $dataHelper
+     * @param array                                            $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
@@ -39,6 +49,8 @@ class View extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Function to prepare layout
+     *
      * @return void
      */
     protected function _prepareLayout()
@@ -78,5 +90,4 @@ class View extends \Magento\Framework\View\Element\Template
         }
         return __('View Another Connectors');
     }
-    
 }

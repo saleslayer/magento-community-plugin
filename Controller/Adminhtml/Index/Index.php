@@ -6,13 +6,13 @@ use Magento\Framework\View\Result\PageFactory;
 
 class Index extends \Magento\Backend\App\Action
 {
-	/**
+    /**
      * @var PageFactory
      */
     protected $resultPageFactory;
 
     /**
-     * @param Context $context
+     * @param Context     $context
      * @param PageFactory $resultPageFactory
      */
     public function __construct(
@@ -22,7 +22,7 @@ class Index extends \Magento\Backend\App\Action
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
     }
-	
+    
     /**
      * Check the permission to run it
      *
@@ -40,7 +40,7 @@ class Index extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-		/** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /* @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
         $resultPage->setActiveMenu(
             'Saleslayer_Synccatalog::manage'

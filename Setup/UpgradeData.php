@@ -24,9 +24,9 @@ class UpgradeData implements UpgradeDataInterface
             $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]);
             
             $eavSetup->addAttribute(
-            \Magento\Catalog\Model\Product::ENTITY,
-            'saleslayer_format_id',
-            [
+                \Magento\Catalog\Model\Product::ENTITY,
+                'saleslayer_format_id',
+                [
                 'type' => 'int',
                 'backend' => '',
                 'frontend' => '',
@@ -47,7 +47,7 @@ class UpgradeData implements UpgradeDataInterface
                 'unique' => false,
                 'apply_to' => '',
                 'note' => "Don't modify or delete this field."
-            ]
+                ]
             );
             
         }

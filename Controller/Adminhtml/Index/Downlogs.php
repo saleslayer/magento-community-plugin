@@ -12,17 +12,17 @@ class Downlogs extends \Magento\Backend\App\Action
     public function __construct(
         \Saleslayer\Synccatalog\Model\Synccatalog $modelo,
         \Magento\Backend\App\Action\Context $context
-    )
-    {
+    ) {
         $this->modelo                   = $modelo;
         parent::__construct($context);
     }
 
-    public function execute(){
+    public function execute()
+    {
         
         $result = $this->modelo->downloadSLLogs();
 
-        if (!$result){
+        if (!$result) {
 
             $this->messageManager->addError(__('Error downloading SL logs zip.'));
         

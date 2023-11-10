@@ -29,38 +29,38 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
 
         $command = $this->getRequest()->getParam('command');
         $permited_command = array('removelogs','removeindexes','deleteregs','deleteunusedimages');
-        /** @var \Magento\Framework\Controller\Result\Raw $response */
+        /* @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $array_return = [];
 
-        if(in_array($command, $permited_command)){
+        if(in_array($command, $permited_command)) {
 
             $return_message = '';
 
             switch ($command){
-                case 'removelogs':
-                    $this->modelo->deleteSLLogs();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
-                case 'removeindexes':
-                    $this->modelo->deleteSLIndexes();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
-                case 'deleteregs':
-                    $this->modelo->deleteSLRegs();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
-                case 'deleteunusedimages':
-                    $return_message = $this->modelo->deleteUnusedImages();
-                    $response->setHeader('Content-type', 'text/plain');
-                    $result_update = true;
-                    break;
-                default:
+            case 'removelogs':
+                $this->modelo->deleteSLLogs();
+                $response->setHeader('Content-type', 'text/plain');
+                $result_update = true;
+                break;
+            case 'removeindexes':
+                $this->modelo->deleteSLIndexes();
+                $response->setHeader('Content-type', 'text/plain');
+                $result_update = true;
+                break;
+            case 'deleteregs':
+                $this->modelo->deleteSLRegs();
+                $response->setHeader('Content-type', 'text/plain');
+                $result_update = true;
+                break;
+            case 'deleteunusedimages':
+                $return_message = $this->modelo->deleteUnusedImages();
+                $response->setHeader('Content-type', 'text/plain');
+                $result_update = true;
+                break;
+            default:
                 $result_update = false;
-                     break;
+                break;
             }
 
             $field_names = array('infopreload'          => 'Multi-connector information load',
@@ -71,7 +71,7 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
                                  );
             $message =  (isset($field_names[$command])) ? $field_names[$command] : $command;
 
-            if ($result_update){
+            if ($result_update) {
                 $array_return['message_type'] = 'success';
                 $array_return['message'] = $message .' executed successfully.';
             }else{
@@ -79,14 +79,15 @@ class Syncajaxcommands extends \Magento\Framework\App\Action\Action
                 $array_return['message'] = 'Error executing '.strtolower($message);
             }
 
-            if ($return_message !== '') $array_return['message'] .= $return_message;
+            if ($return_message !== '') { $array_return['message'] .= $return_message;
+            }
 
         }else{
             $array_return['message_type'] = 'error';
             $array_return['message'] = 'It is not allowed to run this command.';
         }
 
-        $response->setContents($this->jsonHelper->jsonEncode( $array_return));
+        $response->setContents($this->jsonHelper->jsonEncode($array_return));
 
         return $response;
 

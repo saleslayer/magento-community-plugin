@@ -32,16 +32,16 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
     protected $slJson;
 
     /**
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Data\FormFactory $formFactory
-     * @param \Magento\ConfigurableProduct\Ui\DataProvider\Attributes $attributesDataProvider
-     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Collection $collectionAttribute
-     * @param \Magento\Catalog\Model\Product $productModel,
-     * @param \Magento\Eav\Model\Entity\Attribute\Set $setAttribute,
+     * @param \Magento\Backend\Block\Template\Context                         $context
+     * @param \Magento\Framework\Registry                                     $registry
+     * @param \Magento\Framework\Data\FormFactory                             $formFactory
+     * @param \Magento\ConfigurableProduct\Ui\DataProvider\Attributes         $attributesDataProvider
+     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Collection    $collectionAttribute
+     * @param \Magento\Catalog\Model\Product                                  $productModel,
+     * @param \Magento\Eav\Model\Entity\Attribute\Set                         $setAttribute,
      * @param \Magento\ConfigurableProduct\Model\ConfigurableAttributeHandler $configurableAttributeHandler
-     * @param Saleslayer\Synccatalog\Helper\slJson $slJson
-     * @param array $data
+     * @param Saleslayer\Synccatalog\Helper\slJson                            $slJson
+     * @param array                                                           $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -72,7 +72,7 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
         /* @var $model \Magento\Cms\Model\Page */
         $model = $this->_coreRegistry->registry('synccatalog');
 
-        /** @var \Magento\Framework\Data\Form $form */
+        /* @var \Magento\Framework\Data\Form $form */
         $form = $this->_formFactory->create();
 
         $form->setHtmlIdPrefix('synccatalog_main_');
@@ -88,25 +88,27 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
         $avoid_stock_update = false;
         $products_previous_categories = true;
 
-        if (empty($modelData)){
+        if (empty($modelData)) {
             $modelData['store_view_ids'] = array('0') ;
         }else{
             if (isset($modelData['store_view_ids'])
                 && !is_array($modelData['store_view_ids'])
-                && null !== $modelData['store_view_ids']) {
+                && null !== $modelData['store_view_ids']
+            ) {
                 $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
             }else{
                 $modelData['store_view_ids'] = array('0') ;
             }
             if (isset($modelData['format_configurable_attributes'])
                 && !is_array($modelData['format_configurable_attributes'])
-                && null !== $modelData['format_configurable_attributes']){
+                && null !== $modelData['format_configurable_attributes']
+            ) {
                 $modelData['format_configurable_attributes'] = $this->slJson->unserialize($modelData['format_configurable_attributes']);
             }
-            if (isset($modelData['avoid_stock_update']) && $modelData['avoid_stock_update'] == '1'){
+            if (isset($modelData['avoid_stock_update']) && $modelData['avoid_stock_update'] == '1') {
                 $avoid_stock_update = true;
             }
-            if (isset($modelData['products_previous_categories']) && $modelData['products_previous_categories'] == '0'){
+            if (isset($modelData['products_previous_categories']) && $modelData['products_previous_categories'] == '0') {
                 $products_previous_categories = false;
             }
         }
@@ -145,7 +147,7 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
         $this->collectionAttribute->addFieldToFilter($this->setAttribute::KEY_ENTITY_TYPE_ID, $entityType);
         $collection = $this->configurableAttributeHandler->getApplicableAttributes();
 
-        if (!empty($collection)){
+        if (!empty($collection)) {
 
             foreach ($collection->getItems() as $attribute) {
             
@@ -159,7 +161,7 @@ class Products extends \Magento\Backend\Block\Widget\Form\Generic implements \Ma
 
         }
 
-        if (!empty($configurable_attributes)){
+        if (!empty($configurable_attributes)) {
 
             foreach ($configurable_attributes as $configurable_attribute) {
                 

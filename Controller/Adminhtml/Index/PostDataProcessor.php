@@ -20,7 +20,7 @@ class PostDataProcessor
 
     /**
      * @param \Magento\Framework\Stdlib\DateTime\Filter\Date $dateFilter
-     * @param \Magento\Framework\Message\ManagerInterface $messageManager
+     * @param \Magento\Framework\Message\ManagerInterface    $messageManager
      */
     public function __construct(
         \Magento\Framework\Stdlib\DateTime\Filter\Date $dateFilter,
@@ -35,13 +35,13 @@ class PostDataProcessor
     /**
      * Filtering posted data. Converting localized data if needed
      *
-     * @param array $data
+     * @param  array $data
      * @return array
      */
     public function filter($data)
     {
 
-        if (version_compare($this->mg_version, '2.4.6', '>=')){
+        if (version_compare($this->mg_version, '2.4.6', '>=')) {
             
             $inputFilter = new \Magento\Framework\Filter\FilterInput(
                 ['last_update' => $this->dateFilter],
@@ -65,7 +65,7 @@ class PostDataProcessor
     /**
      * Validate post data
      *
-     * @param array $data
+     * @param  array $data
      * @return bool     Return FALSE if someone item is invalid
      */
     public function validate($data)

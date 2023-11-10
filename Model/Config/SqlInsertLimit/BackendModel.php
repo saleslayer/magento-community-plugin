@@ -10,15 +10,22 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Backend model for the Sql insert limit option field. Validates integer value.
+ *
  * @api
  * @since 100.1.0
  */
 class BackendModel extends Value
 {
-    /** Maximum sql rows*/
+    /**
+* 
+ * Maximum sql rows
+*/
     const MAX_LIMIT = 20;
 
-    /** Minimum sql rows */
+    /**
+     *
+     * Minimum sql rows
+     */
     const MIN_LIMIT = 1;
 
     public function beforeSave()

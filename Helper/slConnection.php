@@ -26,8 +26,8 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * slConnection constructor.
      *
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param Saleslayer\Synccatalog\Helper\slDebuger $slDebuger
+     * @param \Magento\Framework\App\Helper\Context     $context
+     * @param Saleslayer\Synccatalog\Helper\slDebuger   $slDebuger
      * @param \Magento\Framework\App\ResourceConnection $resourceConnection
      */
     public function __construct(
@@ -44,32 +44,38 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         $this->deploymentConfig = $deploymentConfig;
         $this->mg_version = $this->productMetadata->getVersion();
 
-        if (version_compare($this->mg_version, '2.3.0') < 0) $this->mg_tables_23[] = 'inventory_source_item';
+        if (version_compare($this->mg_version, '2.3.0') < 0) { $this->mg_tables_23[] = 'inventory_source_item';
+        }
 
     }
 
     /**
      * Function to load resource connection into a class variable
+     *
      * @return void
      */
-    private function loadConnection(){
+    private function loadConnection()
+    {
 
-        if (!is_object($this->connection)) $this->connection = $this->resourceConnection->getConnection();
+        if (!is_object($this->connection)) { $this->connection = $this->resourceConnection->getConnection();
+        }
 
     }
 
     /**
      * Function to get table name with prefix.
-     * @param string $table_name              table to search
+     *
+     * @param  string $table_name table to search
      * @return string                         table in database with prefix
      */
-    public function getTable($table_name){
+    public function getTable($table_name)
+    {
         
         $this->loadConnection();
 
         $table_name_return = $this->connection->getTableName($table_name);
 
-        if ($this->connection->isTableExists($table_name_return)){
+        if ($this->connection->isTableExists($table_name_return)) {
 
             $table_prefix = $this->getTablePrefix();
 
@@ -83,7 +89,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
         }
 
-        if (!in_array($table_name, $this->mg_tables_23)){
+        if (!in_array($table_name, $this->mg_tables_23)) {
 
             $this->slDebuger->debug('## Error. The table '.$table_name.' does not exist.');
 
@@ -95,9 +101,11 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to get table prefix
+     *
      * @return string                        configuration table prefix
      */
-    private function getTablePrefix(){
+    private function getTablePrefix()
+    {
 
         if (null === $this->table_prefix) {
                 
@@ -112,11 +120,13 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to check if column identifier row_id exists
-     * @param string $table_name        table to check
-     * @param string $identifier        identifier to check
+     *
+     * @param  string $table_name table to check
+     * @param  string $identifier identifier to check
      * @return string $identifier       identifier of table
      */
-    public function getColumnIdentifier($table_name, $identifier = 'entity_id'){
+    public function getColumnIdentifier($table_name, $identifier = 'entity_id')
+    {
         
         $this->loadConnection();
 
@@ -130,12 +140,14 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to obtain table status
-     * @param  string   $table_name             table name
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name    table name
+     * @param  string $error_message in case of exception, error message to print
+     * @param  string $sl_log_type   sl log type to print
      * @return array|boolean                    result of table status, false if error
      */
-    public function slDBShowTableStatus($table_name, $error_message = '', $sl_log_type = ''){
+    public function slDBShowTableStatus($table_name, $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
 
@@ -145,7 +157,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         
         }catch(\Exception $e){
             
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -156,13 +168,15 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
     
     /**
      * Function to drop index
-     * @param  string   $table_name             table name
-     * @param  string   $index_name             index name
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name    table name
+     * @param  string $index_name    index name
+     * @param  string $error_message in case of exception, error message to print
+     * @param  string $sl_log_type   sl log type to print
      * @return void
      */
-    public function slDBDropIndex($table_name, $index_name, $error_message = '', $sl_log_type = ''){
+    public function slDBDropIndex($table_name, $index_name, $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
 
@@ -175,7 +189,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
         }catch(\Exception $e){
             
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -183,14 +197,16 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to insert values through resource connection
-     * @param  string   $table_name             table name
-     * @param  array    $values_to_insert       values to insert
-     * @param  array    $field_names            field names
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name       table name
+     * @param  array  $values_to_insert values to insert
+     * @param  array  $field_names      field names
+     * @param  string $error_message    in case of exception, error message to print
+     * @param  string $sl_log_type      sl log type to print
      * @return boolean                          result of insert
      */
-    public function slDBInsert($table_name, $values_to_insert, $field_names, $error_message = '', $sl_log_type = ''){
+    public function slDBInsert($table_name, $values_to_insert, $field_names, $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -210,7 +226,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -220,14 +236,16 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to insert values on duplicate through resource connection
-     * @param  string   $table_name             table name
-     * @param  array    $values_to_insert       values to insert
-     * @param  array    $field_names            field names
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name       table name
+     * @param  array  $values_to_insert values to insert
+     * @param  array  $field_names      field names
+     * @param  string $error_message    in case of exception, error message to print
+     * @param  string $sl_log_type      sl log type to print
      * @return boolean                          result of insert
      */
-    public function slDBInsertOnDuplicate($table_name, $values_to_insert, $field_names, $error_message = '', $sl_log_type = ''){
+    public function slDBInsertOnDuplicate($table_name, $values_to_insert, $field_names, $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -247,7 +265,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -257,13 +275,15 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to insert multiple values through resource connection
-     * @param  string   $table_name             table name
-     * @param  array    $values_to_insert       values to insert
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name       table name
+     * @param  array  $values_to_insert values to insert
+     * @param  string $error_message    in case of exception, error message to print
+     * @param  string $sl_log_type      sl log type to print
      * @return boolean                          result of insert
      */
-    public function slDBInsertMultiple($table_name, $values_to_insert, $error_message = '', $sl_log_type = ''){
+    public function slDBInsertMultiple($table_name, $values_to_insert, $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -282,7 +302,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -292,14 +312,16 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to update values through resource connection
-     * @param  string   $table_name             table name
-     * @param  array    $values_to_update       values to update
-     * @param  array    $condition              conditions for update
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name       table name
+     * @param  array  $values_to_update values to update
+     * @param  array  $condition        conditions for update
+     * @param  string $error_message    in case of exception, error message to print
+     * @param  string $sl_log_type      sl log type to print
      * @return boolean                          result of update
      */
-    public function slDBUpdate($table_name, $values_to_update, $condition = [], $error_message = '', $sl_log_type = ''){
+    public function slDBUpdate($table_name, $values_to_update, $condition = [], $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -319,7 +341,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 
@@ -329,13 +351,15 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to delete values through resource connection
-     * @param  string   $table_name             table name
-     * @param  array    $condition              conditions for delete
-     * @param  string   $error_message          in case of exception, error message to print
-     * @param  string   $sl_log_type            sl log type to print
+     *
+     * @param  string $table_name    table name
+     * @param  array  $condition     conditions for delete
+     * @param  string $error_message in case of exception, error message to print
+     * @param  string $sl_log_type   sl log type to print
      * @return boolean                          result of delete
      */
-    public function slDBDelete($table_name, $condition = [], $error_message = '', $sl_log_type = ''){
+    public function slDBDelete($table_name, $condition = [], $error_message = '', $sl_log_type = '')
+    {
 
         $this->loadConnection();
         $this->connection->beginTransaction();
@@ -354,7 +378,7 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         }catch(\Exception $e){
             
             $this->connection->rollBack();
-            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(),1), $sl_log_type);
+            $this->slDebuger->debug('## Error. '.($error_message !== '' ? $error_message.': ' : '').print_r($e->getMessage(), 1), $sl_log_type);
 
         }
 

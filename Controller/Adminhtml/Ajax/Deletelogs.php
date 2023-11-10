@@ -29,14 +29,14 @@ class Deletelogs extends \Magento\Framework\App\Action\Action
 
         $files_to_delete = $this->getRequest()->getParam('logfilesfordelete');
 
-        /** @var \Magento\Framework\Controller\Result\Raw $response */
+        /* @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         
         $result = $this->modelo->deleteSLLogFile($files_to_delete);
 
         $array_return = [];
         
-        if ($result){
+        if ($result) {
 
             $array_return['message_type'] = 'success';
         

@@ -16,8 +16,8 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * slJson constructor.
      *
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param Saleslayer\Synccatalog\Helper\slDebuger $slDebuger
+     * @param \Magento\Framework\App\Helper\Context        $context
+     * @param Saleslayer\Synccatalog\Helper\slDebuger      $slDebuger
      * @param \Magento\Framework\Serialize\Serializer\Json $json
      */
     public function __construct(
@@ -33,10 +33,12 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to serialize data
-     * @param  array    $data       data to serialize
+     *
+     * @param  array $data data to serialize
      * @return string|boolean       serialized content, if not, false
      */
-    public function serialize($data){
+    public function serialize($data)
+    {
 
         try{
 
@@ -44,7 +46,7 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
 
         }catch(\invalidArgumentException $e){
           
-            $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original data: '.print_r($data,1));
+            $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original data: '.print_r($data, 1));
 
         }
 
@@ -54,12 +56,14 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to unserialize string
-     * @param  string    $string     string to unserialize
+     *
+     * @param  string $string string to unserialize
      * @return array|boolean         unserialized content, if not, false
      */
-    public function unserialize($string){
+    public function unserialize($string)
+    {
 
-        if (is_string($string) && $string !== ''){
+        if (is_string($string) && $string !== '') {
             
             try{
 
@@ -67,7 +71,7 @@ class slJson extends \Magento\Framework\App\Helper\AbstractHelper
 
             }catch(\invalidArgumentException $e){
                 
-                $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original string: '.print_r($string,1));
+                $this->slDebuger->debug('## Error. '.$e->getMessage(). ' - Original string: '.print_r($string, 1));
 
             }
 

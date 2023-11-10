@@ -81,11 +81,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Data constructor.
      *
-     * @param \Magento\Framework\App\Helper\Context $context
+     * @param \Magento\Framework\App\Helper\Context                    $context
      * @param \Magento\Catalog\Api\ProductAttributeRepositoryInterface $attributeRepository
-     * @param \Magento\Eav\Model\Entity\Attribute\Source\TableFactory $tableFactory
-     * @param \Magento\Eav\Model\Entity\Attribute\Option $optionModel
-     * @param \Magento\Catalog\Model\Product\Attribute\Repository $repositoryAttribute
+     * @param \Magento\Eav\Model\Entity\Attribute\Source\TableFactory  $tableFactory
+     * @param \Magento\Eav\Model\Entity\Attribute\Option               $optionModel
+     * @param \Magento\Catalog\Model\Product\Attribute\Repository      $repositoryAttribute
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -117,13 +117,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to Updatate attribute option
-     * @param array $option_stores array of values of stores view to update
-     * @param string $attributeCode attribute code  in string  ('color' or 'size'....)
-     * @param int $optionId Option_id
-     * @param string $optionDefaultValue value to save  if $option_stores view is null
+     *
+     * @param  array  $option_stores      array of values of stores view to update
+     * @param  string $attributeCode      attribute code  in string  ('color' or 'size'....)
+     * @param  int    $optionId           Option_id
+     * @param  string $optionDefaultValue value to save  if $option_stores view is null
      * @return boolean
      */
-    public function updateAttributeOption($attribute_code, $option_id, $option_data){
+    public function updateAttributeOption($attribute_code, $option_id, $option_data)
+    {
         
         try{
 
@@ -131,13 +133,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $swatch_input_type = 'dropdown';
             
-            if ($this->swatchHelper->isSwatchAttribute($attribute)){
+            if ($this->swatchHelper->isSwatchAttribute($attribute)) {
 
                 if ($this->swatchHelper->isVisualSwatch($attribute)) {
 
                     $swatch_input_type = 'visual';
 
-                }else if ($this->swatchHelper->isTextSwatch($attribute)){
+                }else if ($this->swatchHelper->isTextSwatch($attribute)) {
 
                     $swatch_input_type = 'text';
 
@@ -149,17 +151,19 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $sort_order = $option->getSortOrder();
 
-            $attribute->setData('option', [
+            $attribute->setData(
+                'option', [
                 'value' => [
                     $option_id => $option_data
                 ]
-            ]);
+                ]
+            );
 
             $attribute->save();
 
         }catch(\Exception $e){
 
-            $this->slDebuger->debug('## Error on saving cloned option from attribute: '.print_r($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving cloned option from attribute: '.print_r($e->getMessage(), 1));
             return false;
 
         }
@@ -171,41 +175,41 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         
         }catch(\Exception $e){
         
-            $this->slDebuger->debug('## Error on saving setSortOrder: '.print_r($e->getMessage(),1));
+            $this->slDebuger->debug('## Error on saving setSortOrder: '.print_r($e->getMessage(), 1));
 
         }
 
-        if ($swatch_input_type == 'text'){
+        if ($swatch_input_type == 'text') {
             
             try{
 
-               foreach ($option_data as $store_view_id => $value) {
+                foreach ($option_data as $store_view_id => $value) {
 
-                   $swatchCollection = $this->swatchCollectionFactory->create();
-                   $swatch = $swatchCollection
-                           ->addFieldToFilter('option_id', $option_id)
-                           ->addFieldToFilter('store_id', $store_view_id)
-                           ->setPageSize(1)
-                           ->getFirstItem();
+                    $swatchCollection = $this->swatchCollectionFactory->create();
+                    $swatch = $swatchCollection
+                        ->addFieldToFilter('option_id', $option_id)
+                        ->addFieldToFilter('store_id', $store_view_id)
+                        ->setPageSize(1)
+                        ->getFirstItem();
             
-                   if (empty($swatch->getData())){   
+                    if (empty($swatch->getData())) {   
 
-                       $new_swatch = clone $this->swatchModel;
-                       $new_swatch->setOptionId($option_id);
-                       $new_swatch->setStoreId($store_view_id);
-                       $new_swatch->setValue($value);
-                       $new_swatch->setType($this->swatchModel::SWATCH_TYPE_TEXTUAL);
-                       $new_swatch->save();    
+                        $new_swatch = clone $this->swatchModel;
+                        $new_swatch->setOptionId($option_id);
+                        $new_swatch->setStoreId($store_view_id);
+                        $new_swatch->setValue($value);
+                        $new_swatch->setType($this->swatchModel::SWATCH_TYPE_TEXTUAL);
+                        $new_swatch->save();    
 
-                   }
+                    }
 
-               }
+                }
 
-           }catch(\Exception $e){
+            }catch(\Exception $e){
 
-               $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
+                $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
 
-           }
+            }
         
         }
 
@@ -216,10 +220,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Get attribute by code.
      *
-     * @param string $attributeCode
+     * @param  string $attributeCode
      * @return \Magento\Catalog\Model\ResourceModel\Eav\Attribute
      */
-    public function getAttribute($attributeCode){
+    public function getAttribute($attributeCode)
+    {
 
         return $this->attributeRepository->get($attributeCode);
     
@@ -228,39 +233,41 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Find or create a matching attribute option
      *
-     * @param string $attributeCode Attribute the option should exist in
-     * @param string $label Label to find or add
+     * @param  string $attributeCode Attribute the option should exist in
+     * @param  string $label         Label to find or add
      * @return int|boolean
      */
-    public function createOrGetId($attributeCode, $label, $store_ids){
+    public function createOrGetId($attributeCode, $label, $store_ids)
+    {
 
         if (strlen($label) < 1) {
             $this->slDebuger->debug('## Error creating new option. Label for '.$attributeCode.' must not be empty.');
             return false;            
         }
 
-        if (empty($store_ids)){
+        if (empty($store_ids)) {
             $this->store_ids = array(0);
         }else{
             $this->store_ids = $store_ids;
-            if (!in_array(0, $this->store_ids)){ $this->store_ids[] = 0; }
+            if (!in_array(0, $this->store_ids)) { $this->store_ids[] = 0; 
+            }
         }
 
         $optionId = $this->getOptionId($attributeCode, $label);
         
-        if (!$optionId){
+        if (!$optionId) {
 
             $attribute = $this->getAttribute($attributeCode);
 
             $swatch_input_type = 'dropdown';
             
-            if ($this->swatchHelper->isSwatchAttribute($attribute)){
+            if ($this->swatchHelper->isSwatchAttribute($attribute)) {
 
                 if ($this->swatchHelper->isVisualSwatch($attribute)) {
 
                     $swatch_input_type = 'visual';
 
-                }else if ($this->swatchHelper->isTextSwatch($attribute)){
+                }else if ($this->swatchHelper->isTextSwatch($attribute)) {
 
                     $swatch_input_type = 'text';
 
@@ -280,7 +287,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                 foreach ($this->store_ids as $store_id) {
                     
-                    if ($store_id == 0){ continue; }
+                    if ($store_id == 0) { continue; 
+                    }
                     $option_label_store = clone $optionLabel;
                     $option_label_store->setStoreId($store_id);
                     $option_label_store->setLabel($label);
@@ -309,7 +317,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             }
 
-            if ($swatch_input_type == 'text'){
+            if ($swatch_input_type == 'text') {
 
                 try{
 
@@ -317,29 +325,29 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                         
                         $swatchCollection = $this->swatchCollectionFactory->create();
                         $swatch = $swatchCollection
-                               ->addFieldToFilter('option_id', $optionId)
-                               ->addFieldToFilter('store_id', $store_id)
-                               ->setPageSize(1)
-                               ->getFirstItem();
+                            ->addFieldToFilter('option_id', $optionId)
+                            ->addFieldToFilter('store_id', $store_id)
+                            ->setPageSize(1)
+                            ->getFirstItem();
                       
-                        if (empty($swatch->getData())){   
+                        if (empty($swatch->getData())) {   
 
-                           $new_swatch = clone $this->swatchModel;
-                           $new_swatch->setOptionId($optionId);
-                           $new_swatch->setStoreId($store_id);
-                           $new_swatch->setValue($label);
-                           $new_swatch->setType($this->swatchModel::SWATCH_TYPE_TEXTUAL);
-                           $new_swatch->save();
+                            $new_swatch = clone $this->swatchModel;
+                            $new_swatch->setOptionId($optionId);
+                            $new_swatch->setStoreId($store_id);
+                            $new_swatch->setValue($label);
+                            $new_swatch->setType($this->swatchModel::SWATCH_TYPE_TEXTUAL);
+                            $new_swatch->save();
                            
-                       }
+                        }
 
-                   }
+                    }
 
-               }catch(\Exception $e){
+                }catch(\Exception $e){
 
-                   $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
+                    $this->slDebuger->debug('## Error creating new swatch: '.$e->getMessage());
 
-               }
+                }
             
             }
 
@@ -352,9 +360,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Create or get a matching attribute option
      *
-     * @param string $attributeCode Attribute the option should exist in
-     * @param string $attributeValue Attribute value to create or get
-     * @param int $storeViewId  Store view id
+     * @param  string $attributeCode  Attribute the option should exist in
+     * @param  string $attributeValue Attribute value to create or get
+     * @param  int    $storeViewId    Store view id
      * @return int
      */
     public function createOrGetOptionIdByValue($attribute, $attributeValue, $storeViewId)
@@ -371,7 +379,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($optionId === null) {
             // If no, add it.
-            /** @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel */
+            /**
+* 
+             *
+ * @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel 
+*/
             $optionLabel = $this->optionLabelFactory->create();
             $optionLabel->setStoreId($storeViewId);
             $optionLabel->setLabel((string) $attributeValue);
@@ -396,12 +408,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Find the ID of an option matching $label, if any.
      *
-     * @param string $attributeCode Attribute code
-     * @param string $label Label to find
-     * @param bool $force If true, will fetch the options even if they're already cached.
+     * @param  string $attributeCode Attribute code
+     * @param  string $label         Label to find
+     * @param  bool   $force         If true, will fetch the options even if they're already cached.
      * @return int|boolean
      */
-    public function getOptionId($attributeCode, $label, $force = false){
+    public function getOptionId($attributeCode, $label, $force = false)
+    {
         
         $attribute = $this->getAttribute($attributeCode);
 
@@ -429,21 +442,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Find the last sort order of an attribute options and return the next.
      *
-     * @param string $attributeCode Attribute code
+     * @param  string $attributeCode Attribute code
      * @return int
      */
-    public function getAttributeLastSortOrder($attributeCode){
+    public function getAttributeLastSortOrder($attributeCode)
+    {
 
         $last_sort_order = $this->optionModel->getCollection()
-                                ->addFieldToSelect('sort_order')
-                                ->addFieldToFilter('attribute_id', $attributeCode)
-                                ->setOrder('sort_order','DESC')
-                                ->getFirstItem()
-                                ->getData();
+            ->addFieldToSelect('sort_order')
+            ->addFieldToFilter('attribute_id', $attributeCode)
+            ->setOrder('sort_order', 'DESC')
+            ->getFirstItem()
+            ->getData();
 
         $sort_order = 1;
 
-        if (!empty($last_sort_order)){
+        if (!empty($last_sort_order)) {
 
             $sort_order = $last_sort_order['sort_order'] + 1;
         

@@ -12,19 +12,19 @@ class Edit extends \Magento\Backend\App\Action
      */
     protected $_coreRegistry = null;
 
-	/**
+    /**
      * @var \Magento\Framework\View\Result\PageFactory
      */
     protected $resultPageFactory;
-	
+    
     /**
-     * @param Action\Context $context
-	 * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
-     * @param \Magento\Framework\Registry $registry
+     * @param Action\Context                             $context
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
+     * @param \Magento\Framework\Registry                $registry
      */
     public function __construct(Action\Context $context, \Magento\Framework\View\Result\PageFactory $resultPageFactory, \Magento\Framework\Registry $registry)
     {
-		$this->resultPageFactory = $resultPageFactory;
+        $this->resultPageFactory = $resultPageFactory;
         $this->_coreRegistry = $registry;
         parent::__construct($context);
     }
@@ -45,7 +45,7 @@ class Edit extends \Magento\Backend\App\Action
     protected function _initAction()
     {
         // load layout, set active menu and breadcrumbs
-		/** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /* @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
         $resultPage->setActiveMenu(
             'Saleslayer_Synccatalog::synccatalog_manage'
@@ -56,13 +56,13 @@ class Edit extends \Magento\Backend\App\Action
             __('Manage Synccatalog'),
             __('Manage Synccatalog')
         );
-		return $resultPage;
+        return $resultPage;
     }
 
     /**
      * Edit Synccatalog page
      *
-     * @return \Magento\Backend\Model\View\Result\Page|\Magento\Backend\Model\View\Result\Redirect
+     * @return                                  \Magento\Backend\Model\View\Result\Page|\Magento\Backend\Model\View\Result\Redirect
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function execute()
@@ -77,7 +77,7 @@ class Edit extends \Magento\Backend\App\Action
             $model->load($id);
             if (!$model->getId()) {
                 $this->messageManager->addError(__('This connector no longer exists.'));
-                /** \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+                /* \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
                 $resultRedirect = $this->resultRedirectFactory->create();
 
                 return $resultRedirect->setPath('*/*/');
@@ -94,7 +94,7 @@ class Edit extends \Magento\Backend\App\Action
         $this->_coreRegistry->register('synccatalog', $model);
 
         // 5. Build edit form
-		/** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /* @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->_initAction();
         $resultPage->addBreadcrumb(
             $id ? __('Edit Connector') : __('New Connector'),
@@ -103,7 +103,7 @@ class Edit extends \Magento\Backend\App\Action
         $resultPage->getConfig()->getTitle()->prepend(__('Synccatalog'));
         $resultPage->getConfig()->getTitle()
             ->prepend($model->getId() ? $model->getTitle() : __('New Connector'));
-			
+            
         return $resultPage;
     }
 }

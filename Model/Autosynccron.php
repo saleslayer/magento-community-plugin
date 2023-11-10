@@ -36,88 +36,95 @@ use \Zend_Db_Expr as Expr;
 /**
  * Class Saleslayer_Synccatalog_Model_Autosynccron
  */
-class Autosynccron extends Synccatalog{
+class Autosynccron extends Synccatalog
+{
     
     protected       $sl_time_ini_auto_sync_process;
     protected       $cronSchedule;
 
     /**
      * Sales Layer Autosync constructor.
+     *
      * @return void
      */
     public function __construct(
-                context $context,
-                registry $registry,
-                SalesLayerConn $salesLayerConn,
-                synccatalogDataHelper $synccatalogDataHelper,
-                slConnection $slConnection,
-                slDebuger $slDebuger,
-                slJson $slJson,
-                synccatalogConfigHelper $synccatalogConfigHelper,
-                directoryListFilesystem $directoryListFilesystem,
-                categoryModel $categoryModel,
-                productModel $productModel,
-                attribute $attribute,
-                attribute_set $attribute_set,
-                productAttributeManagementInterface $productAttributeManagementInterface,
-                indexer $indexer,
-                resourceConnection $resourceConnection,
-                collectionOption $collectionOption,
-                cronSchedule $cronSchedule,
-                scopeConfigInterface $scopeConfigInterface,
-                categoryUrlPathGenerator $categoryUrlPathGenerator,
-                productUrlPathGenerator $productUrlPathGenerator,
-                catalogInventoryConfiguration $catalogInventoryConfiguration,
-                eavConfig $eavConfig,
-                typeListInterface $typeListInterface,
-                countryOfManufacture $countryOfManufacture,
-                layoutSource $layoutSource,
-                stockRegistryInterface $stockRegistryInterface,
-                productRepository $productRepository,
-                resource $resource = null,
-                resourceCollection $resourceCollection = null,
-                array $data = []) {
-        parent::__construct($context,
-                            $registry, 
-                            $salesLayerConn, 
-                            $synccatalogDataHelper,
-                            $slConnection,
-                            $slDebuger,
-                            $slJson,
-                            $synccatalogConfigHelper,
-                            $directoryListFilesystem,
-                            $categoryModel, 
-                            $productModel,
-                            $attribute,
-                            $attribute_set,
-                            $productAttributeManagementInterface,
-                            $indexer,
-                            $resourceConnection,
-                            $collectionOption,
-                            $cronSchedule,
-                            $scopeConfigInterface,
-                            $categoryUrlPathGenerator,
-                            $productUrlPathGenerator,
-                            $catalogInventoryConfiguration,
-                            $eavConfig,
-                            $typeListInterface,
-                            $countryOfManufacture,
-                            $layoutSource,
-                            $stockRegistryInterface,
-                            $productRepository,
-                            $resource,
-                            $resourceCollection,
-                            $data);
+        context $context,
+        registry $registry,
+        SalesLayerConn $salesLayerConn,
+        synccatalogDataHelper $synccatalogDataHelper,
+        slConnection $slConnection,
+        slDebuger $slDebuger,
+        slJson $slJson,
+        synccatalogConfigHelper $synccatalogConfigHelper,
+        directoryListFilesystem $directoryListFilesystem,
+        categoryModel $categoryModel,
+        productModel $productModel,
+        attribute $attribute,
+        attribute_set $attribute_set,
+        productAttributeManagementInterface $productAttributeManagementInterface,
+        indexer $indexer,
+        resourceConnection $resourceConnection,
+        collectionOption $collectionOption,
+        cronSchedule $cronSchedule,
+        scopeConfigInterface $scopeConfigInterface,
+        categoryUrlPathGenerator $categoryUrlPathGenerator,
+        productUrlPathGenerator $productUrlPathGenerator,
+        catalogInventoryConfiguration $catalogInventoryConfiguration,
+        eavConfig $eavConfig,
+        typeListInterface $typeListInterface,
+        countryOfManufacture $countryOfManufacture,
+        layoutSource $layoutSource,
+        stockRegistryInterface $stockRegistryInterface,
+        productRepository $productRepository,
+        resource $resource = null,
+        resourceCollection $resourceCollection = null,
+        array $data = []
+    ) {
+        parent::__construct(
+            $context,
+            $registry, 
+            $salesLayerConn, 
+            $synccatalogDataHelper,
+            $slConnection,
+            $slDebuger,
+            $slJson,
+            $synccatalogConfigHelper,
+            $directoryListFilesystem,
+            $categoryModel, 
+            $productModel,
+            $attribute,
+            $attribute_set,
+            $productAttributeManagementInterface,
+            $indexer,
+            $resourceConnection,
+            $collectionOption,
+            $cronSchedule,
+            $scopeConfigInterface,
+            $categoryUrlPathGenerator,
+            $productUrlPathGenerator,
+            $catalogInventoryConfiguration,
+            $eavConfig,
+            $typeListInterface,
+            $countryOfManufacture,
+            $layoutSource,
+            $stockRegistryInterface,
+            $productRepository,
+            $resource,
+            $resourceCollection,
+            $data
+        );
 
     }
     
     /**
      * Function to sort connectors by unix_to_update or auto_sync values.
-     * @param  array $conn_a                first connector to sort
-     * @param  array $conn_b                second connector to sort
+     *
+     * @param  array $conn_a first connector to sort
+     * @param  array $conn_b second connector to sort
      * @return integer                      comparative of connectors
      */
-    private function sort_by_unix_to_update($conn_a, $conn_b) {
+    private function sort_by_unix_to_update($conn_a, $conn_b)
+    {
 
         $unix_a = $conn_a['unix_to_update'];
         $unix_b = $conn_b['unix_to_update'];
@@ -127,7 +134,7 @@ class Autosynccron extends Synccatalog{
             $auto_a = $conn_a['auto_sync'];
             $auto_b = $conn_b['auto_sync'];
            
-            if ($auto_a == $auto_b){
+            if ($auto_a == $auto_b) {
                 
                 return 0;
 
@@ -143,9 +150,11 @@ class Autosynccron extends Synccatalog{
 
     /**
      * Function to check if sync data crons are stuck
+     *
      * @return void
      */
-    private function check_sync_data_crons(){
+    private function check_sync_data_crons()
+    {
 
         $now = strtotime('now');
         $current_flag = $this->connection->fetchRow(
@@ -155,13 +164,13 @@ class Autosynccron extends Synccatalog{
                 ->limit(1)
         );
 
-        if (!empty($current_flag)){
+        if (!empty($current_flag)) {
 
-            if ($current_flag['syncdata_pid'] !== 0){
+            if ($current_flag['syncdata_pid'] !== 0) {
             
                 $interval  = abs($now - strtotime($current_flag['syncdata_last_date']));
                 
-                if ($interval >= 480){
+                if ($interval >= 480) {
 
                     $date_now = date('Y-m-d H:i:s', $now);
 
@@ -185,7 +194,7 @@ class Autosynccron extends Synccatalog{
         $running_crons = $this->connection->fetchAll(
             $this->connection->select()
                 ->from(
-                   $this->slConnection->getTable('cron_schedule')
+                    $this->slConnection->getTable('cron_schedule')
                 )
                 ->where("job_code = 'Saleslayer_Synccatalog_Syncdatacron'")
                 ->where("status ='running'")
@@ -197,7 +206,7 @@ class Autosynccron extends Synccatalog{
             $cron = $this->cronSchedule->load($running_cron['schedule_id']);
             $interval  = abs($now - strtotime($running_cron['executed_at']));
 
-            if ($interval >= 480){
+            if ($interval >= 480) {
 
                 $this->slDebuger->debug('Killing cron job '.$running_cron['job_code'].' with schedule_id '.$running_cron['schedule_id'].'. Scheduled at '.$running_cron['scheduled_at'].', executed at '.$running_cron['executed_at'].' with time interval of '.$interval.' seconds.', 'autosync');
 
@@ -210,7 +219,7 @@ class Autosynccron extends Synccatalog{
 
                 }catch(\Exception $e){
 
-                    $this->slDebuger->debug('## Error. Exception killing cron job '.$running_cron['schedule_id'].': '.print_r($e->getMessage(),1), 'autosync');
+                    $this->slDebuger->debug('## Error. Exception killing cron job '.$running_cron['schedule_id'].': '.print_r($e->getMessage(), 1), 'autosync');
 
                 }
          
@@ -222,9 +231,11 @@ class Autosynccron extends Synccatalog{
 
     /**
      * Function to check and synchronize Sales Layer connectors with auto-synchronization enabled.
+     *
      * @return void
      */
-    public function auto_sync_connectors(){
+    public function auto_sync_connectors()
+    {
 
         $this->loadConfigParameters();
         $this->load_magento_variables();
@@ -243,7 +254,7 @@ class Autosynccron extends Synccatalog{
             )
         );
         
-        if (isset($items_processing) && $items_processing > 0){
+        if (isset($items_processing) && $items_processing > 0) {
 
             $this->slDebuger->debug("There are still ".$items_processing." items processing, wait until is finished and synchronize again.", 'autosync');
            
@@ -255,39 +266,40 @@ class Autosynccron extends Synccatalog{
                 
                 $now = strtotime('now');
                 
-                if (!empty($all_connectors)){
+                if (!empty($all_connectors)) {
 
                     $connectors_to_check = [];
 
                     foreach ($all_connectors as $idx_conn => $connector) {
 
-                        if ($connector['auto_sync'] > 0){
+                        if ($connector['auto_sync'] > 0) {
                             
                             $connector_last_sync = $connector['last_sync'];
                             $connector_last_sync_unix = strtotime($connector_last_sync ?? 0);
                             
                             $unix_to_update = $now - ($connector['auto_sync'] * 3600);
                             
-                            if ($connector_last_sync_unix == ''){
+                            if ($connector_last_sync_unix == '') {
 
                                 $connector['unix_to_update'] = $unix_to_update;
                                 $connectors_to_check[] = $connector;
 
                             }else{
                                 
-                                if ($connector['auto_sync'] >= 24){
+                                if ($connector['auto_sync'] >= 24) {
                                     
-                                    $unix_to_update_hour = mktime($connector['auto_sync_hour'],0,0,date('m', $unix_to_update),date('d', $unix_to_update),date('Y', $unix_to_update));
+                                    $unix_to_update_hour = mktime($connector['auto_sync_hour'], 0, 0, date('m', $unix_to_update), date('d', $unix_to_update), date('Y', $unix_to_update));
                                   
-                                    if ($connector_last_sync_unix < $unix_to_update &&
-                                        $unix_to_update_hour <= $now){
+                                    if ($connector_last_sync_unix < $unix_to_update 
+                                        && $unix_to_update_hour <= $now
+                                    ) {
 
                                         $connector['unix_to_update'] = $unix_to_update_hour;
                                         $connectors_to_check[] = $connector;
 
                                     }
 
-                                }else if ($connector_last_sync_unix < $unix_to_update){
+                                }else if ($connector_last_sync_unix < $unix_to_update) {
 
                                     $connector['unix_to_update'] = $unix_to_update;
                                     $connectors_to_check[] = $connector;
@@ -300,16 +312,17 @@ class Autosynccron extends Synccatalog{
 
                     }
 
-                    if ($connectors_to_check){
+                    if ($connectors_to_check) {
 
                         uasort($connectors_to_check, array($this, 'sort_by_unix_to_update'));
 
                         foreach ($connectors_to_check as $connector) {
 
-                            if ($connector['auto_sync'] >= 24){
+                            if ($connector['auto_sync'] >= 24) {
 
-                                $last_sync_time = mktime($connector['auto_sync_hour'],0,0,date('m', $now),date('d', $now),date('Y', $now));
-                                if ($last_sync_time > $now) $last_sync_time -= ($connector['auto_sync'] * 3600);
+                                $last_sync_time = mktime($connector['auto_sync_hour'], 0, 0, date('m', $now), date('d', $now), date('Y', $now));
+                                if ($last_sync_time > $now) { $last_sync_time -= ($connector['auto_sync'] * 3600);
+                                }
 
                                 $last_sync = date('Y-m-d H:i:s', $last_sync_time);
 
@@ -333,12 +346,12 @@ class Autosynccron extends Synccatalog{
                             
                             $this->slDebuger->debug("#### time_cron_sync: " . (microtime(1) - $time_ini_cron_sync - $time_random) . ' seconds.', 'autosync');
                             
-                            if (is_array($data_return)){
+                            if (is_array($data_return)) {
 
-                                if (!isset($data_return['storage_error'])){
+                                if (!isset($data_return['storage_error'])) {
 
                                     //If the connector result has data we break process so it can sync.
-                                    if (!empty($data_return)){ 
+                                    if (!empty($data_return)) { 
 
                                         break;
 
@@ -396,37 +409,42 @@ class Autosynccron extends Synccatalog{
 
     /**
      * Function to delete SL logs since X days
+     *
      * @return void
      */
-    private function delete_sl_logs_since_days(){
+    private function delete_sl_logs_since_days()
+    {
 
-        if (in_array($this->delete_sl_logs_since_days, array('', null, 0))) return false;
+        if (in_array($this->delete_sl_logs_since_days, array('', null, 0))) { return false;
+        }
         
         $log_folder_files = scandir($this->sl_logs_path);
 
-        if (!empty($log_folder_files)){
+        if (!empty($log_folder_files)) {
 
-            if (($key = array_search('.', $log_folder_files)) !== false) unset($log_folder_files[$key]);
-            if (($key = array_search('..', $log_folder_files)) !== false) unset($log_folder_files[$key]);
+            if (($key = array_search('.', $log_folder_files)) !== false) { unset($log_folder_files[$key]);
+            }
+            if (($key = array_search('..', $log_folder_files)) !== false) { unset($log_folder_files[$key]);
+            }
             
-            if (!empty($log_folder_files)){
+            if (!empty($log_folder_files)) {
 
                 $filters_replace = array('/(_error_debbug_log_saleslayer_)/', '/(_debbug_log_saleslayer_timers_)/', '/(_debbug_log_saleslayer_auto_sync_)/', '/(_debbug_log_saleslayer_sync_data_)/', '/(_debbug_log_saleslayer_)/', '/(.dat)/');
 
                 foreach ($log_folder_files as $log_folder_file) {
                     
-                    if (strpos($log_folder_file, '_debbug_log_saleslayer_') !== false){
+                    if (strpos($log_folder_file, '_debbug_log_saleslayer_') !== false) {
                         
                         $file_date = preg_replace($filters_replace, '', $log_folder_file);            
                         $is_valid_date = (bool)strtotime($file_date);
 
-                        if ($is_valid_date){
+                        if ($is_valid_date) {
 
-                            if (strtotime($file_date) < strtotime('-'.$this->delete_sl_logs_since_days.' days')){
+                            if (strtotime($file_date) < strtotime('-'.$this->delete_sl_logs_since_days.' days')) {
 
                                 $file_path = $this->sl_logs_path.$log_folder_file;
 
-                                if (file_exists($file_path)){
+                                if (file_exists($file_path)) {
 
                                     $this->slDebuger->debug('Deleting SL log: '.$log_folder_file.' for being older than '.$this->delete_sl_logs_since_days.' days.');
                                     unlink($file_path);

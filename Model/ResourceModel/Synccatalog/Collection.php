@@ -13,6 +13,9 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
      */
     protected function _construct()
     {
-        $this->_init('Saleslayer\Synccatalog\Model\Synccatalog', 'Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog');
+        $this->_init(
+            \Saleslayer\Synccatalog\Model\Synccatalog::class,
+            \Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog::class
+        );
     }
 }

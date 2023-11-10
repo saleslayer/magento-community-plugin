@@ -3,13 +3,13 @@ namespace Saleslayer\Synccatalog\Controller\Adminhtml\Index;
 
 class NewAction extends \Magento\Backend\App\Action
 {
-	/**
+    /**
      * @var \Magento\Backend\Model\View\Result\ForwardFactory
      */
     protected $resultForwardFactory;
 
     /**
-     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Backend\App\Action\Context               $context
      * @param \Magento\Backend\Model\View\Result\ForwardFactory $resultForwardFactory
      */
     public function __construct(
@@ -19,7 +19,7 @@ class NewAction extends \Magento\Backend\App\Action
         $this->resultForwardFactory = $resultForwardFactory;
         parent::__construct($context);
     }
-	
+    
     /**
      * {@inheritdoc}
      */

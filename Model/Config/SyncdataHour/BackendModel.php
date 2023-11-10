@@ -10,15 +10,22 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Backend model for the Syncdata hour option field. Validates integer value.
+ *
  * @api
  * @since 100.1.0
  */
 class BackendModel extends Value
 {
-    /** Maximum hour*/
+    /**
+     *
+     * Maximum hour
+     */
     const MAX_LIMIT = 23;
 
-    /** Minimum hour */
+    /**
+     *
+     * Minimum hour
+     */
     const MIN_LIMIT = 0;
 
     public function beforeSave()

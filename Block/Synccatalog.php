@@ -7,27 +7,31 @@ namespace Saleslayer\Synccatalog\Block;
 class Synccatalog extends \Magento\Framework\View\Element\Template
 {
     /**
-     * Synccatalog collection
+     * Synccatalog object collection
      *
-     * @var Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog\Collection
+     * @var object $_synccatalogCollection
      */
     protected $_synccatalogCollection = null;
     
     /**
      * Synccatalog factory
      *
-     * @var \Saleslayer\Synccatalog\Model\SynccatalogFactory
+     * @var \Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog\Collection
      */
     protected $_synccatalogCollectionFactory;
     
-    /** @var \Saleslayer\Synccatalog\Helper\Data */
+    /**
+     * Synccatalog Data helper
+     *
+     * @var \Saleslayer\Synccatalog\Helper\Data
+     */
     protected $_dataHelper;
     
     /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
+     * @param \Magento\Framework\View\Element\Template\Context                     $context
      * @param \Saleslayer\Synccatalog\Model\Resource\Synccatalog\CollectionFactory $synccatalogCollectionFactory
-	 * @param \Saleslayer\Synccatalog\Helper\Data $dataHelper
-     * @param array $data
+     * @param \Saleslayer\Synccatalog\Helper\Data                                  $dataHelper
+     * @param array                                                                $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
@@ -64,7 +68,7 @@ class Synccatalog extends \Magento\Framework\View\Element\Template
         if (null === $this->_synccatalogCollection) {
             $this->_synccatalogCollection = $this->_getCollection();
             $this->_synccatalogCollection->setCurPage($this->getCurrentPage());
-            $this->_synccatalogCollection->setOrder('last_update','asc');
+            $this->_synccatalogCollection->setOrder('last_update', 'asc');
         }
 
         return $this->_synccatalogCollection;
@@ -83,12 +87,11 @@ class Synccatalog extends \Magento\Framework\View\Element\Template
     /**
      * Return URL to item's view page
      *
-     * @param Saleslayer_Synccatalog_Model_Synccatalog $synccatalogItem
+     * @param  Saleslayer_Synccatalog_Model_Synccatalog $synccatalogItem
      * @return string
      */
     public function getItemUrl($synccatalogItem)
     {
-        return $this->getUrl('*/*/view', array('id' => $synccatalogItem->getId()));
+        return $this->getUrl('*/*/view', ['id' => $synccatalogItem->getId()]);
     }
-    
 }

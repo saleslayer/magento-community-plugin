@@ -22,7 +22,7 @@ class Delete extends \Magento\Backend\App\Action
     {
         // check if we know what should be deleted
         $id = $this->getRequest()->getParam('id');
-		/** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /* @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultRedirectFactory->create();
         if ($id) {
             // $connector_id = "";

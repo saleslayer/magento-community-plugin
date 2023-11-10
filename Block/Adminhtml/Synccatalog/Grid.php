@@ -18,11 +18,11 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
     protected $_systemStore;
 
     /**
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Backend\Helper\Data $backendHelper
-     * @param \Saleslayer\Synccatalog\Model\Synccatalog $synccatalog
+     * @param \Magento\Backend\Block\Template\Context                                   $context
+     * @param \Magento\Backend\Helper\Data                                              $backendHelper
+     * @param \Saleslayer\Synccatalog\Model\Synccatalog                                 $synccatalog
      * @param \Saleslayer\Synccatalog\Model\ResourceModel\Synccatalog\CollectionFactory $collectionFactory
-     * @param array $data
+     * @param array                                                                     $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -73,10 +73,12 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     protected function _prepareColumns()
     {
-        $this->addColumn('id', [
+        $this->addColumn(
+            'id', [
             'header'    => __('ID'),
             'index'     => 'id',
-        ]);
+            ]
+        );
         
         $this->addColumn('connector_id', ['header' => __('Connector ID'), 'index' => 'connector_id']);
 
@@ -97,7 +99,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
     /**
      * Row click url
      *
-     * @param \Magento\Framework\Object $row
+     * @param  \Magento\Framework\Object $row
      * @return string
      */
     public function getRowUrl($row)

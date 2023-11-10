@@ -17,11 +17,11 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
     /**
      * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Data\FormFactory $formFactory
-     * @param \Magento\Store\Model\System\Store $systemStore
-     * @param Saleslayer\Synccatalog\Helper\slJson $slJson
-     * @param array $data
+     * @param \Magento\Framework\Registry             $registry
+     * @param \Magento\Framework\Data\FormFactory     $formFactory
+     * @param \Magento\Store\Model\System\Store       $systemStore
+     * @param Saleslayer\Synccatalog\Helper\slJson    $slJson
+     * @param array                                   $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -48,7 +48,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
         /* @var $model \Magento\Cms\Model\Page */
         $model = $this->_coreRegistry->registry('synccatalog');
 
-        /** @var \Magento\Framework\Data\Form $form */
+        /* @var \Magento\Framework\Data\Form $form */
         $form = $this->_formFactory->create();
 
         $form->setHtmlIdPrefix('synccatalog_main_');
@@ -61,7 +61,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
         $modelData = $model->getData();
 
-        if (empty($modelData)){
+        if (empty($modelData)) {
             $modelData['store_view_ids'] = array('0') ;
         }else{
             $modelData['store_view_ids'] = $this->slJson->unserialize($modelData['store_view_ids']);
@@ -71,7 +71,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
         $auto_sync_values = array(0, 1, 3, 6, 8, 12, 15, 24, 48, 72);
         
         foreach ($auto_sync_values as $auto_sync_value) {
-            if ($auto_sync_value == 0){
+            if ($auto_sync_value == 0) {
                 array_push($auto_sync_options, array('label' => ' ', 'value' => $auto_sync_value));
             }else{
                 array_push($auto_sync_options, array('label' => $auto_sync_value.'H', 'value' => $auto_sync_value));
@@ -80,7 +80,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
         $datetime_last_sync = '';
         
-        if (!empty($modelData['last_sync'])){
+        if (!empty($modelData['last_sync'])) {
             $last_sync_timezoned = $this->timezone->date($modelData['last_sync'])->format('M d, Y, H:i:s A');
             $datetime_last_sync = "<br><small>Connector's last auto-synchronization: ".$last_sync_timezoned."</small>";
             $datetime_last_sync .= "<br><small><strong>*Note: This synchronization will be executed according to the server time.</strong></small>";
@@ -102,7 +102,7 @@ class Parameters extends \Magento\Backend\Block\Widget\Form\Generic implements \
             ]
         );
         
-        if (!empty($modelData) && isset($modelData['auto_sync']) && $modelData['auto_sync'] >= 24){
+        if (!empty($modelData) && isset($modelData['auto_sync']) && $modelData['auto_sync'] >= 24) {
             $hour_input_disabled = false;
         }else{
             $hour_input_disabled = true;

@@ -18,9 +18,9 @@ class Tools extends \Magento\Backend\App\Action
     protected $resultPageFactory;
     
     /**
-     * @param Action\Context $context
+     * @param Action\Context                             $context
      * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
-     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Framework\Registry                $registry
      */
     public function __construct(Action\Context $context, \Magento\Framework\View\Result\PageFactory $resultPageFactory, \Magento\Framework\Registry $registry)
     {
@@ -54,7 +54,7 @@ class Tools extends \Magento\Backend\App\Action
     /**
      * Edit Synccatalog page
      *
-     * @return \Magento\Backend\Model\View\Result\Page|\Magento\Backend\Model\View\Result\Redirect
+     * @return                                  \Magento\Backend\Model\View\Result\Page|\Magento\Backend\Model\View\Result\Redirect
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function execute()
@@ -69,7 +69,7 @@ class Tools extends \Magento\Backend\App\Action
             $model->load($id);
             if (!$model->getId()) {
                 $this->messageManager->addError(__('This connector no longer exists.'));
-                /** \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+                /* \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
                 $resultRedirect = $this->resultRedirectFactory->create();
 
                 return $resultRedirect->setPath('*/*/');
@@ -83,7 +83,7 @@ class Tools extends \Magento\Backend\App\Action
         }
 
         // 4. Build edit form
-        /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /* @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->_initAction();
         $resultPage->addBreadcrumb(
             $id ? __('Tools') : __('Tools'),
@@ -91,7 +91,7 @@ class Tools extends \Magento\Backend\App\Action
         );
         
         $resultPage->getConfig()->getTitle()
-            ->prepend( __('Sales Layer tools'));
+            ->prepend(__('Sales Layer tools'));
             
         return $resultPage;
     }

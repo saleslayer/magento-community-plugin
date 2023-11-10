@@ -20,9 +20,9 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Debuger constructor.
      *
-     * @param \Magento\Framework\App\Helper\Context $context
+     * @param \Magento\Framework\App\Helper\Context       $context
      * @param \Magento\Framework\Filesystem\DirectoryList $directoryListFilesystem
-     * @param \Saleslayer\Synccatalog\Helper\Config $synccatalogConfigHelper
+     * @param \Saleslayer\Synccatalog\Helper\Config       $synccatalogConfigHelper
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -40,9 +40,11 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to load Debuger parameters
+     *
      * @return void
      */
-    protected function loadDebugerParameters(){
+    protected function loadDebugerParameters()
+    {
 
         $this->sl_DEBBUG = $this->synccatalogConfigHelper->getDebugerLevel();
 
@@ -50,11 +52,13 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to validate if SL Logs Folder exists, if not, create it
+     *
      * @return void
      */
-    protected function checkSLLogsFolder(){
+    protected function checkSLLogsFolder()
+    {
 
-        if (!$this->sl_logs_folder_checked){
+        if (!$this->sl_logs_folder_checked) {
 
             $this->sl_logs_path = $this->directoryListFilesystem->getPath('log').'/sl_logs/';
 
@@ -72,54 +76,57 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Function to debbug into a Sales Layer log.
-     * @param string $msg       message to save
-     * @param string $type      type of message to save
-     * @param int $seconds      seconds for timer debbug
+     *
+     * @param  string $msg     message to save
+     * @param  string $type    type of message to save
+     * @param  int    $seconds seconds for timer debbug
      * @return void
      */
-    public function debug($msg, $type = '', $seconds = null){
+    public function debug($msg, $type = '', $seconds = null)
+    {
         
-        if ($this->sl_DEBBUG > 0){
+        if ($this->sl_DEBBUG > 0) {
 
             $error_write = false;
-            if (strpos($msg, '## Error.') !== false){
+            if (strpos($msg, '## Error.') !== false) {
                 $error_write = true;
                 $error_file = $this->sl_logs_path.'_error_debbug_log_saleslayer_'.date('Y-m-d').'.dat';
             }
 
             switch ($type) {
-                case 'timer':
-                    $file = $this->sl_logs_path.'_debbug_log_saleslayer_timers_'.date('Y-m-d').'.dat';
+            case 'timer':
+                $file = $this->sl_logs_path.'_debbug_log_saleslayer_timers_'.date('Y-m-d').'.dat';
 
-                    if (null !== $seconds){
+                if (null !== $seconds) {
 
-                        $msg .= $seconds.' seconds.';
+                    $msg .= $seconds.' seconds.';
 
-                    }else{
+                }else{
 
-                        $msg = 'ERROR - NULL SECONDS on timer debug!!! - '.$msg;
+                    $msg = 'ERROR - NULL SECONDS on timer debug!!! - '.$msg;
 
-                    }
+                }
 
-                    break;
+                break;
 
-                case 'autosync':
-                    $file = $this->sl_logs_path.'_debbug_log_saleslayer_auto_sync_'.date('Y-m-d').'.dat';
-                    break;
+            case 'autosync':
+                $file = $this->sl_logs_path.'_debbug_log_saleslayer_auto_sync_'.date('Y-m-d').'.dat';
+                break;
 
-                case 'syncdata':
-                    $file = $this->sl_logs_path.'_debbug_log_saleslayer_sync_data_'.date('Y-m-d').'.dat';
-                    break;
+            case 'syncdata':
+                $file = $this->sl_logs_path.'_debbug_log_saleslayer_sync_data_'.date('Y-m-d').'.dat';
+                break;
 
-                default:
-                    $file = $this->sl_logs_path.'_debbug_log_saleslayer_'.date('Y-m-d').'.dat';
-                    break;
+            default:
+                $file = $this->sl_logs_path.'_debbug_log_saleslayer_'.date('Y-m-d').'.dat';
+                break;
             }
 
             $new_file = false;
-            if (!file_exists($file)){ $new_file = true; }
+            if (!file_exists($file)) { $new_file = true; 
+            }
 
-            if ($this->sl_DEBBUG > 1){
+            if ($this->sl_DEBBUG > 1) {
 
                 $mem = sprintf("%05.2f", (memory_get_usage(true)/1024)/1024);
 
@@ -133,7 +140,7 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
                     
                     $srv = sys_getloadavg();
                     
-                    if (is_array($srv) && isset($srv[0])){
+                    if (is_array($srv) && isset($srv[0])) {
 
                         $srv = $srv[0];
 
@@ -147,17 +154,20 @@ class slDebuger extends \Magento\Framework\App\Helper\AbstractHelper
 
             file_put_contents($file, "$msg\r\n", FILE_APPEND);
 
-            if ($new_file){ chmod($file, 0777); }
+            if ($new_file) { chmod($file, 0777); 
+            }
 
-            if ($error_write){
+            if ($error_write) {
 
                 $new_error_file = false;
                 
-                if (!file_exists($error_file)){ $new_error_file = true; }
+                if (!file_exists($error_file)) { $new_error_file = true; 
+                }
 
                 file_put_contents($error_file, "$msg\r\n", FILE_APPEND);
 
-                if ($new_error_file){ chmod($error_file, 0777); }
+                if ($new_error_file) { chmod($error_file, 0777); 
+                }
 
             }
 

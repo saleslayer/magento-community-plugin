@@ -40,14 +40,14 @@ class Updateconnfield extends \Magento\Framework\App\Action\Action
                              'products_previous_categories'   => 'Products previous categories',
                              'format_configurable_attributes' => 'Format configurable attributes');
 
-        /** @var \Magento\Framework\Controller\Result\Raw $response */
+        /* @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $response->setHeader('Content-type', 'text/plain');
 
         $array_return = [];
         $field_message = (isset($field_names[$field_name])) ? $field_names[$field_name] : $field_name;
 
-        if ($result_update){
+        if ($result_update) {
 
             $array_return['message_type'] = 'success';
             $array_return['message'] = 'Field updated successfully '.$field_message;
@@ -58,7 +58,7 @@ class Updateconnfield extends \Magento\Framework\App\Action\Action
             $array_return['message'] = 'Error on field update '.$field_message;
 
         }
-        $response->setContents($this->jsonHelper->jsonEncode( $array_return));
+        $response->setContents($this->jsonHelper->jsonEncode($array_return));
 
         return $response;
     }

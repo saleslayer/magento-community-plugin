@@ -23,8 +23,9 @@ class InstallData implements InstallDataInterface
         $this->eavSetupFactory = $eavSetupFactory;
     }
 
-	/**
+    /**
      * {@inheritdoc}
+     *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
@@ -33,14 +34,14 @@ class InstallData implements InstallDataInterface
         $parentId = \Magento\Catalog\Model\Category::TREE_ROOT_ID;
 
         $parentCategory = $this->objectManager
-                              ->create('Magento\Catalog\Model\Category')
-                              ->load($parentId);
+            ->create('Magento\Catalog\Model\Category')
+            ->load($parentId);
         $category = $this->objectManager
-                        ->create('Magento\Catalog\Model\Category');
+            ->create('Magento\Catalog\Model\Category');
         
         $sl_cat = $category->getCollection()
-                    ->addAttributeToFilter('name','Sales Layer')
-                    ->getFirstItem();
+            ->addAttributeToFilter('name', 'Sales Layer')
+            ->getFirstItem();
 
         if($sl_cat->getId() == null) {
             $category->setPath($parentCategory->getPath())
@@ -54,9 +55,9 @@ class InstallData implements InstallDataInterface
         $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]); 
         
         $eavSetup->addAttribute(
-        \Magento\Catalog\Model\Category::ENTITY,
-        'saleslayer_id',
-        [
+            \Magento\Catalog\Model\Category::ENTITY,
+            'saleslayer_id',
+            [
             'group' => 'General Information',
             'type' => 'int',
             'label' => 'Sales Layer Category Identification',
@@ -69,13 +70,13 @@ class InstallData implements InstallDataInterface
             'sort_order' => 10,
             'default' => 0,
             'note' => "Don't modify or delete this field.",
-        ]
+            ]
         );
 
         $eavSetup->addAttribute(
-        \Magento\Catalog\Model\Category::ENTITY,
-        'saleslayer_comp_id',
-        [
+            \Magento\Catalog\Model\Category::ENTITY,
+            'saleslayer_comp_id',
+            [
             'group' => 'General Information',
             'type' => 'int',
             'label' => 'Sales Layer Category Company Identification',
@@ -88,13 +89,13 @@ class InstallData implements InstallDataInterface
             'sort_order' => 20,
             'default' => 0,
             'note' => "Don't modify or delete this field.",
-        ]
+            ]
         );
 
         $eavSetup->addAttribute(
-        \Magento\Catalog\Model\Product::ENTITY,
-        'saleslayer_id',
-        [
+            \Magento\Catalog\Model\Product::ENTITY,
+            'saleslayer_id',
+            [
             'type' => 'int',
             'backend' => '',
             'frontend' => '',
@@ -115,13 +116,13 @@ class InstallData implements InstallDataInterface
             'unique' => false,
             'apply_to' => '',
             'note' => "Don't modify or delete this field."
-        ]
+            ]
         );
 
         $eavSetup->addAttribute(
-        \Magento\Catalog\Model\Product::ENTITY,
-        'saleslayer_comp_id',
-        [
+            \Magento\Catalog\Model\Product::ENTITY,
+            'saleslayer_comp_id',
+            [
             'type' => 'int',
             'backend' => '',
             'frontend' => '',
@@ -142,8 +143,8 @@ class InstallData implements InstallDataInterface
             'unique' => false,
             'apply_to' => '',
             'note' => "Don't modify or delete this field."
-        ]
+            ]
         ); 
        
-	}
+    }
 }

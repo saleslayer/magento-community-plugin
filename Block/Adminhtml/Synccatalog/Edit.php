@@ -12,8 +12,8 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
 
     /**
      * @param \Magento\Backend\Block\Widget\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param array $data
+     * @param \Magento\Framework\Registry           $registry
+     * @param array                                 $data
      */
     public function __construct(
         \Magento\Backend\Block\Widget\Context $context,
@@ -40,7 +40,7 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
         $model = $this->_coreRegistry->registry('synccatalog');
         $modelData = $model->getData();
 
-        if (empty($modelData)){
+        if (empty($modelData)) {
             $this->buttonList->update('save', 'label', __('Save Connector'));
             $this->buttonList->remove('delete');
         }else{

@@ -10,15 +10,22 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Backend model for the Syncdata delete logs since X days option field. Validates integer value.
+ *
  * @api
  * @since 100.1.0
  */
 class BackendModel extends Value
 {
-    /** Maximum days*/
+    /**
+     *
+     * Maximum days
+     */
     const MAX_LIMIT = 31;
 
-    /** Minimum days */
+    /**
+     *
+     * Minimum days
+     */
     const MIN_LIMIT = 0;
 
     public function beforeSave()

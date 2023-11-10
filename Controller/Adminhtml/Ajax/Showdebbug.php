@@ -24,42 +24,43 @@ class Showdebbug extends \Magento\Framework\App\Action\Action
         $this->modelo = $modelo;
     }
 
-    public function execute(){
+    public function execute()
+    {
 
         $command = $this->getRequest()->getParam('logcommand');
 
-        /** @var \Magento\Framework\Controller\Result\Raw $response */
+        /* @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
         $array_return = [];
 
         switch ($command){
-            case 'showlogfiles':
-                $response_function = $this->modelo->checkFilesLogs();
-                $response->setHeader('Content-type', 'text/plain');
-                break;
-            case 'showservertime':
-                $response_function[0] = 1;
-                $response_function[1] = 'Current server time: '.date('H:i');
-                $response_function['seconds'] = date('s');
-                $response_function['function'] = 'showservertime';
-                $response->setHeader('Content-type', 'text/plain');
-                break;
-            default:
-                $response_function = $this->modelo->showContentFile($command);
-                $response->setHeader('Content-type', 'text/plain');
-                break;
-       }
+        case 'showlogfiles':
+            $response_function = $this->modelo->checkFilesLogs();
+            $response->setHeader('Content-type', 'text/plain');
+            break;
+        case 'showservertime':
+            $response_function[0] = 1;
+            $response_function[1] = 'Current server time: '.date('H:i');
+            $response_function['seconds'] = date('s');
+            $response_function['function'] = 'showservertime';
+            $response->setHeader('Content-type', 'text/plain');
+            break;
+        default:
+            $response_function = $this->modelo->showContentFile($command);
+            $response->setHeader('Content-type', 'text/plain');
+            break;
+        }
 
-       if ($response_function[0] == 1){
+        if ($response_function[0] == 1) {
             $array_return['message_type'] = 'success';
             $array_return['function'] = $response_function['function'];
             $array_return['content'] = $response_function[1];
             if($command == 'showservertime'  ) {
                 $array_return['seconds'] = $response_function['seconds'];
             }
-            if($command != 'showlogfiles' && $command != 'showservertime' ){
+            if($command != 'showlogfiles' && $command != 'showservertime' ) {
 
-                if($response_function[2] >= 1 ){
+                if($response_function[2] >= 1 ) {
                     $array_return['lines'] = $response_function[2];
                     $array_return['warnings'] = $response_function[3];
                     $array_return['errors'] = $response_function[4];
@@ -75,7 +76,7 @@ class Showdebbug extends \Magento\Framework\App\Action\Action
             $array_return['errors']   = (isset($response_function['errors'])?$response_function['errors']:0);
         }
 
-        $response->setContents($this->jsonHelper->jsonEncode( $array_return));
+        $response->setContents($this->jsonHelper->jsonEncode($array_return));
 
         return $response;
 

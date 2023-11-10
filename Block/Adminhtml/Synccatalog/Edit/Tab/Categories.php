@@ -2,11 +2,13 @@
 namespace Saleslayer\Synccatalog\Block\Adminhtml\Synccatalog\Edit\Tab;
 
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
+use \Magento\Backend\Block\Widget\Form\Generic as generic;
+use \Magento\Backend\Block\Widget\Tab\TabInterface as tabInterface;
 
 /**
  * Synccatalog page edit form Parameters tab
  */
-class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \Magento\Backend\Block\Widget\Tab\TabInterface
+class Categories extends generic implements tabInterface
 {
 
     protected $categoryModel;
@@ -17,16 +19,16 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
     protected $slConnection;
 
     /**
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Data\FormFactory $formFactory
-     * @param \Magento\Catalog\Model\Category $categoryModel
-     * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
-     * @param \Magento\Eav\Model\Entity\Attribute\Source\Boolean $booleanSource
+     * @param \Magento\Backend\Block\Template\Context                 $context
+     * @param \Magento\Framework\Registry                             $registry
+     * @param \Magento\Framework\Data\FormFactory                     $formFactory
+     * @param \Magento\Catalog\Model\Category                         $categoryModel
+     * @param \Magento\Eav\Model\Config                               $eavConfig
+     * @param \Magento\Framework\App\ResourceConnection               $resourceConnection
+     * @param \Magento\Eav\Model\Entity\Attribute\Source\Boolean      $booleanSource
      * @param \Magento\Catalog\Model\Category\Attribute\Source\Layout $layoutSource
-     * @param Saleslayer\Synccatalog\Helper\slConnection
-     * @param array $data
+     * @param Saleslayer\Synccatalog\Helper\slConnection              $slConnection
+     * @param array                                                   $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -60,7 +62,11 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
         /* @var $model \Magento\Cms\Model\Page */
         $model = $this->_coreRegistry->registry('synccatalog');
 
-        /** @var \Magento\Framework\Data\Form $form */
+        /**
+         *
+         *
+         * @var \Magento\Framework\Data\Form $form
+         */
         $form = $this->_formFactory->create();
 
         $form->setHtmlIdPrefix('synccatalog_main_');
@@ -73,7 +79,7 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
         $modelData = $model->getData();
 
-        if(empty($modelData)){
+        if(empty($modelData)) {
             $modelData['category_page_layout'] = '1column';
         }
 
@@ -168,9 +174,11 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
     /**
      * Function to get Magento root categories
+     *
      * @return array $root_categories               Magento root categories
      */
-    private function getRootCategories(){
+    private function getRootCategories()
+    {
 
         $root_categories = [];
 
@@ -180,7 +188,7 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
         $name_attribute = $this->getAttribute('name', $category_entity_type_id);
 
-        if (empty($name_attribute) || !isset($name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])){
+        if (empty($name_attribute) || !isset($name_attribute[\Magento\Eav\Api\Data\AttributeInterface::BACKEND_TYPE])) {
             return $root_categories;
         }
 
@@ -224,11 +232,13 @@ class Categories extends \Magento\Backend\Block\Widget\Form\Generic implements \
 
     /**
      * Function to get attribute
-     * @param string $code                          attribute code to search
-     * @param int $entityTypeId                     entity type id of item
+     *
+     * @param  string $code         attribute code to search
+     * @param  int    $entityTypeId entity type id of item
      * @return boolean|array                        attribute found
      */
-    private function getAttribute($code, $entityTypeId){
+    private function getAttribute($code, $entityTypeId)
+    {
         
         $attribute = $this->connection->fetchRow(
             $this->connection->select()
