@@ -379,11 +379,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($optionId === null) {
             // If no, add it.
-            /**
-* 
-             *
- * @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel 
-*/
+            /* @var \Magento\Eav\Model\Entity\Attribute\OptionLabel $optionLabel */
             $optionLabel = $this->optionLabelFactory->create();
             $optionLabel->setStoreId($storeViewId);
             $optionLabel->setLabel((string) $attributeValue);

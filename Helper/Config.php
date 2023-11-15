@@ -7,9 +7,9 @@ use \Magento\Framework\App\Helper\AbstractHelper;
 class Config extends AbstractHelper
 {
     /**
-* 
- * Config params 
-*/
+     *
+     * Config params 
+     */
     const CONFIG_SYNCCATALOG_GENERAL_ACTIVATE_DEBUG_LOGS  = 'synccatalog/general/activate_debug_logs';
     const CONFIG_SYNCCATALOG_GENERAL_MANAGE_INDEXERS = 'synccatalog/general/manage_indexers';
     const CONFIG_SYNCCATALOG_GENERAL_SQL_TO_INSERT_LIMIT  = 'synccatalog/general/sql_to_insert_limit';

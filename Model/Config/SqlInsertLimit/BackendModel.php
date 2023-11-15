@@ -17,9 +17,9 @@ use Magento\Framework\Exception\LocalizedException;
 class BackendModel extends Value
 {
     /**
-* 
- * Maximum sql rows
-*/
+     *
+     * Maximum sql rows
+     */
     const MAX_LIMIT = 20;
 
     /**
