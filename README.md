@@ -12,7 +12,7 @@ This plugin allows you to easily synchronize your Sales Layer catalogue informat
 
 ## Latest changes  
 
-Check out the latest changes at our [changelog][changelog-md].
+Read our [Changelog].
 
 ## Important Notes
 
@@ -53,7 +53,7 @@ See [install extensions on Magento Open Source][magento-install-extensions] for 
 Once executed and installed, the plugin will be found in your Magento installation root path, inside the folder 'vendor/saleslayer/magento-community-plugin/
 
 ##### 1.1.1.1 Composer command examples
-To install the latest latest valid version of the main branch: 
+To install the latest valid version of the main branch: 
 ```
 composer require saleslayer/magento-community-plugin
 ```
@@ -108,8 +108,8 @@ php bin/magento cache:clean
 | Version       | Status | Magento Version (Open Source) | PHP       | Recommended Configuration  |
 |---------------|--------|-------------------------------|-----------|----------------------------|
 | 2.5.x - 2.6.0 | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
-| 2.6.x         | EOL    | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
-| 2.7.0         | Latest | >= 2.4.4, <= 2.4.6            | 8.1 - 8.2 | Magento 2.4.6-p3 / PHP 8.1 |
+| [2.6.x]       | EOL    | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
+| [2.7.0]       | Latest | >= 2.4.4, <= 2.4.6            | 8.1 - 8.2 | Magento 2.4.6-p3 / PHP 8.1 |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
@@ -120,7 +120,9 @@ php bin/magento cache:clean
 
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
-[changelog-md]: https://github.com/saleslayer/magento-community-plugin/blob/master/CHANGELOG.md
+[Changelog]: ./CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
 [magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 [magento-install-extensions]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/tutorials/extensions.html?lang=en
+[2.6.x]:https://github.com/saleslayer/magento-community-plugin/tree/2.6.x
+[2.7.0]:https://github.com/saleslayer/magento-community-plugin/releases/tag/2.7.0
