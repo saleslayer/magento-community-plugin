@@ -10,10 +10,6 @@ This is the official Sales Layer's plugin for Magento Community (Open Source).
 
 This plugin allows you to easily synchronize your Sales Layer catalogue information with your [Magento Community]. And you can find more detailed documentation at our [website].
 
-## Latest changes  
-
-Read our [Changelog].
-
 ## Important Notes
 
 Please check the [important notes] for the installation. (In some cases, a Sales Layer account might be needed to access the documentation).
