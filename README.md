@@ -105,11 +105,11 @@ php bin/magento cache:clean
 
 ## Version Guidance
 
-| Branch         | Status     | Magento Version (Open Source) | PHP compatibility | Changelog                             | Composer install |
-|----------------|------------|-------------------------------|-------------------|---------------------------------------|------------------|
-| [2.5.x]        | EOL        | >= 2.1.4, <= 2.4.0            | 7.3               | [Changelog 2.5.x][changelog-2.5.x]    | No               |
-| [2.6.x]        | Fixes only | >= 2.1.4, <= 2.4.5            | \>= 7.3, <= 8.1   | [Changelog 2.6.x][changelog-2.6.x]    | No               |
-| [2.7.x]        | Stable     | >= 2.4.4, <= 2.4.6            | 8.1, 8.2          | [Changelog 2.7.x][Changelog]          | Yes              |
+| Branch         | Status     | Magento Open Source Version   | PHP compatibility | Changelog                             | Composer |
+|----------------|------------|-------------------------------|-------------------|---------------------------------------|----------|
+| [2.5.x]        | EOL        | >= 2.1.4, <= 2.4.0            | 7.3               | [Changelog 2.5.x][changelog-2.5.x]    | No       |
+| [2.6.x]        | Fixes only | >= 2.1.4, <= 2.4.5            | \>= 7.3, <= 8.1   | [Changelog 2.6.x][changelog-2.6.x]    | No       |
+| [2.7.x]        | Stable     | >= 2.4.4, <= 2.4.6            | 8.1, 8.2          | [Changelog 2.7.x][Changelog]          | Yes      |
 
 ## Branch 2.7.x Release recommended configuration
 
