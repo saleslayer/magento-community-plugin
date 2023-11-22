@@ -39,7 +39,7 @@ Please check the [important notes] for the installation. (In some cases, a Sales
 #### 1.1 Download the package in your Magento
 
 > **Warning**.
-> Install the plugin only automatically or manually. If you try to install it with both methods at the same time, in step 1.2 Magento will return an error.
+> If you have previously installed the plugin manually in root folder 'app/code', uninstall it. Then install the plugin automatically through composer. If you try to install it in both ways at the same time, in step 1.2 Magento will return an error.
 
 ##### 1.1.1 Via Composer. In your Magento root folder, execute command:
 ```
@@ -75,11 +75,6 @@ In case a requirement is not met, an error will be given by Composer.
 
 > **Info**
 > This will only happen if your Magento installation doesn’t met the requirements of the specific branch or tag version being installed, or by default, none of the main branch releases.  
-
-##### 1.1.2 Manually. Download the latest version zip and uncompress it into your Magento root folder 'app/code'
-
-> **Warning**.
-> Since plugin 2.7.0 version, this method will be deprecated. We strongly recommend to install the plugin via Composer. See step 1.1.1.
 
 #### 1.2 From Magento root folder execute commands:
 
