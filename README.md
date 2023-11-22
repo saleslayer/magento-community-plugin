@@ -35,13 +35,12 @@ Please check the [important notes] for the installation. (In some cases, a Sales
 ## How To Start
 
 ### 1. Module package install process
-
-#### 1.1 Download the package in your Magento
+The recommended way to install this extension is through [Composer].
 
 > **Warning**.
 > If you have previously installed the plugin manually in root folder 'app/code', uninstall it. Then install the plugin automatically through composer. If you try to install it in both ways at the same time, in step 1.2 Magento will return an error.
 
-##### 1.1.1 Via Composer. In your Magento root folder, execute command:
+#### 1.1 Through Composer. In your Magento root folder, execute command:
 ```
 composer require saleslayer/magento-community-plugin
 ```
@@ -52,7 +51,7 @@ See [install extensions on Magento Open Source][magento-install-extensions] for 
 
 Once executed and installed, the plugin will be found in your Magento installation root path, inside the folder 'vendor/saleslayer/magento-community-plugin/
 
-##### 1.1.1.1 Composer command examples
+#### 1.1.1 Composer command examples
 To install the latest valid version of the main branch: 
 ```
 composer require saleslayer/magento-community-plugin
@@ -68,7 +67,7 @@ Branch feature-295 will be installed (the branch name can be changed to any bran
 composer require saleslayer/magento-community-plugin:dev-feature_295
 ```
 
-##### 1.1.1.2 Composer requirements
+#### 1.1.2 Composer requirements
 Following Version guidance, check the plugin version to check which PHP and Magento version are required to install the plugin.
 
 In case a requirement is not met, an error will be given by Composer.
@@ -122,6 +121,7 @@ php bin/magento cache:clean
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
 [Changelog]: ./CHANGELOG.md
+[Composer]: https://getcomposer.org/
 [changelog-2.5.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.5.x/CHANGELOG.md
 [changelog-2.6.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.6.x/CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
