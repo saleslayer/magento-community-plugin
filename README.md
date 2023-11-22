@@ -12,7 +12,8 @@ This plugin allows you to easily synchronize your Sales Layer catalogue informat
 
 ## Download 
 
-[Download latest plugin version][latest-release-download].
+Download [Sales Layer Magento 2 extension 2.6.3](https://github.com/saleslayer/magento-community-plugin/releases/download/2.6.3/magento-community-plugin.zip) compatible with Magento Open Source from versions 2.1.4 up to 2.4.5
+
 Check out the latest changes at our [changelog][changelog-md].
 
 ## Important Notes
@@ -61,14 +62,16 @@ php bin/magento cache:clean
 #### 3.1 Go to Sales Layer -> Import -> Add connector and add the connector id and secret key.
 #### 3.2 Finally, In Sales Layer -> Import -> The connector you created, push Synchronize Connector to import categories, products and variants automatically.
 
-## Version Guidance
 
-| Version       | Status | Magento Version (Open Source) | PHP       |  Recommended Configuration |
-|---------------|--------|-------------------------------|-----------|----------------------------|
-| 2.5.x         | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
-| 2.6.0         | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
-| 2.6.1 - 2.6.2 | Stable | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
-| 2.6.3         | Latest | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |	
+## Branch 2.6.x Release recommended configuration
+
+
+| Release        | Magento2 Version             | PHP      | Web Server | 
+|----------------|-------------------------------|---------|------------|
+| [2.6.0][2.6.0] |  Magento Open Source 2.4.0    | PHP 7.3 | Apache2.4  |
+| [2.6.1][2.6.1] |  Magento Open Source 2.4.5-p1 | PHP 8.1 | Apache2.4  |
+| [2.6.2][2.6.2] |  Magento Open Source 2.4.5-p1 | PHP 8.1 | Apache2.4  |
+| [2.6.3][2.6.3] |  Magento Open Source 2.4.5-p1 | PHP 8.1 | Apache2.4  |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
@@ -79,7 +82,11 @@ php bin/magento cache:clean
 
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
-[latest-release-download]: https://github.com/saleslayer/magento-community-plugin/releases/download/2.6.3/magento-community-plugin.zip
-[changelog-md]: https://github.com/saleslayer/magento-community-plugin/tree/2.6.2/CHANGELOG.md
+[changelog-md]: ./CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
 [magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
+[2.6.0]: https://github.com/saleslayer/magento-community-plugin/releases/tag/2.6.0
+[2.6.1]: https://github.com/saleslayer/magento-community-plugin/releases/tag/2.6.1
+[2.6.2]: https://github.com/saleslayer/magento-community-plugin/releases/tag/2.6.2
+[2.6.3]: https://github.com/saleslayer/magento-community-plugin/releases/tag/2.6.3
+
