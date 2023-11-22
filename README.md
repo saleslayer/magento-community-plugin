@@ -105,11 +105,17 @@ php bin/magento cache:clean
 
 ## Version Guidance
 
-| Version       | Status | Magento Version (Open Source) | PHP       | Recommended Configuration  |
-|---------------|--------|-------------------------------|-----------|----------------------------|
-| 2.5.x - 2.6.0 | EOL    | >= 2.1.4, <= 2.4.0            | 7.3       | Magento 2.4.0    / PHP 7.3 |
-| [2.6.x]       | EOL    | >= 2.1.4, <= 2.4.5            | 7.3 - 8.1 | Magento 2.4.5-p1 / PHP 8.1 |
-| [2.7.0]       | Latest | >= 2.4.4, <= 2.4.6            | 8.1 - 8.2 | Magento 2.4.6-p3 / PHP 8.1 |
+| Branch         | Status     | Magento Version (Open Source) | PHP compatibility | Changelog                             | Composer install |
+|----------------|------------|-------------------------------|-------------------|---------------------------------------|------------------|
+| [2.5.x]        | EOL        | >= 2.1.4, <= 2.4.0            | 7.3               | [Changelog 2.5.x][changelog-2.5.x]    | No               |
+| [2.6.x]        | Fixes only | >= 2.1.4, <= 2.4.5            | \>= 7.3, <= 8.1   | [Changelog 2.6.x][changelog-2.6.x]    | No               |
+| [2.7.x]        | Stable     | >= 2.4.4, <= 2.4.6            | 8.1, 8.2          | [Changelog 2.7.x][Changelog]          | Yes              |
+
+## Branch 2.7.x Release recommended configuration
+
+| Release        | Magento2 Version              | PHP     | Web Server | 
+|----------------|-------------------------------|---------|------------|
+| [2.7.0][2.7.0] |  Magento Open Source 2.4.6-p3 | PHP 8.1 | Apache2.4  |
 
 > **Warning**.
 > Adobe releases frequently new Magento Open Source versions, fixing bugs and/or adding new functionallity. Some of this versions could be in conflict with this plugin. We highly encourage you to set up the configuration recommended in the guidance table for running correctly this extension.
@@ -121,8 +127,12 @@ php bin/magento cache:clean
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
 [Changelog]: ./CHANGELOG.md
+[changelog-2.5.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.5.x/CHANGELOG.md
+[changelog-2.6.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.6.x/CHANGELOG.md
 [important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
 [magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 [magento-install-extensions]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/tutorials/extensions.html?lang=en
+[2.5.x]:https://github.com/saleslayer/magento-community-plugin/tree/2.5.x
 [2.6.x]:https://github.com/saleslayer/magento-community-plugin/tree/2.6.x
+[2.7.x]:https://github.com/saleslayer/magento-community-plugin/tree/2.7.x
 [2.7.0]:https://github.com/saleslayer/magento-community-plugin/releases/tag/2.7.0
