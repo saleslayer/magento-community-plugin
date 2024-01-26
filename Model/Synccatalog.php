@@ -81,6 +81,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $sync_data_hour_from = 0;
     protected $sync_data_hour_until = 0;
     protected $format_type_creation = 'simple';
+    protected $add_sl_id_to_format_name = 1;
     protected $delete_sl_logs_since_days = 0;
 
     protected $comp_id;
@@ -282,6 +283,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $format_as_product_categories_used_by_formats = [];
     protected $stored_sl_data                       = [];
 
+    protected $attributeCodesByAttributeSetId       = [];
+    
     /**
      * Function __construct
      *
@@ -409,6 +412,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->sync_data_hour_from = $this->synccatalogConfigHelper->getSyncDataHourFrom();
         $this->sync_data_hour_until = $this->synccatalogConfigHelper->getSyncDataHourUntil();
         $this->format_type_creation = $this->synccatalogConfigHelper->getFormatTypeCreation();
+        $this->add_sl_id_to_format_name = $this->synccatalogConfigHelper->getAddSLIDToFormatName();
         $this->delete_sl_logs_since_days = $this->synccatalogConfigHelper->getDeleteSLLogsSinceDays();
 
     }
@@ -1724,6 +1728,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->variant_sync_params_to_store['avoid_stock_update'] = $this->avoid_stock_update;
         $this->variant_sync_params_to_store['format_configurable_attributes'] = $this->format_configurable_attributes;
         $this->variant_sync_params_to_store['avoid_images_updates'] = $this->avoid_images_updates;
+        $this->variant_sync_params_to_store['add_sl_id_to_format_name'] = $this->add_sl_id_to_format_name;
 
 
         if (!isset($schema['fields'][$this->format_field_name])) {
@@ -5044,7 +5049,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
         $time_ini_format_process = microtime(1);
 
-        $format['data'][$this->format_field_name] = $format[$this->format_field_id].'_'.$format['data'][$this->format_field_name];
+        if ($this->add_sl_id_to_format_name){
+            $format['data'][$this->format_field_name] = $format[$this->format_field_id].'_'.$format['data'][$this->format_field_name];
+        }
+        
         $sl_product_id = $format[$this->format_field_products_id];
 
         $this->mg_product_id = $this->find_saleslayer_product_id_db($sl_product_id);
@@ -5727,12 +5735,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
                     }
 
-                    $time_ini_get_attribute_additional = microtime(1);
-                    $result_check = $this->checkAttributeInSetId($field_name, $this->product_entity_type_id, $this->mg_product_attribute_set_id);
-                    if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_get_attribute_additional: ', 'timer', (microtime(1) - $time_ini_get_attribute_additional));
+                    if (!isset($this->attributeCodesByAttributeSetId[$this->mg_product_attribute_set_id])){
+                        $time_ini_load_attribute_codes_by_attribute_set_id = microtime(1);
+                        $this->loadattributeCodesByAttributeSetId($this->product_entity_type_id, $this->mg_product_attribute_set_id);
+                        if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_load_attribute_codes_by_attribute_set_id: ', 'timer', (microtime(1) - $time_ini_load_attribute_codes_by_attribute_set_id));
+                        }
                     }
 
-                    if (!$result_check) {
+                    if (!isset($this->attributeCodesByAttributeSetId[$this->mg_product_attribute_set_id][$field_name])){
 
                         continue;
 
@@ -12459,12 +12469,14 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
                     }
 
-                    $time_attribute_additional = microtime(1);
-                    $result_check = $this->checkAttributeInSetId($field_name, $this->product_entity_type_id, $this->mg_product_attribute_set_id);
-                    if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_get_attribute_additional: ', 'timer', (microtime(1) - $time_attribute_additional));
+                    if (!isset($this->attributeCodesByAttributeSetId[$this->mg_product_attribute_set_id])){
+                        $time_ini_load_attribute_codes_by_attribute_set_id = microtime(1);
+                        $this->loadattributeCodesByAttributeSetId($this->product_entity_type_id, $this->mg_product_attribute_set_id);
+                        if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_load_attribute_codes_by_attribute_set_id: ', 'timer', (microtime(1) - $time_ini_load_attribute_codes_by_attribute_set_id));
+                        }
                     }
 
-                    if (!$result_check) {
+                    if (!isset($this->attributeCodesByAttributeSetId[$this->mg_product_attribute_set_id][$field_name])){
 
                         if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_prepare_additional_field: ', 'timer', (microtime(1) - $time_additional_field));
                         }
@@ -12494,6 +12506,41 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_prepare_all_additional_fields: ', 'timer', (microtime(1) - $time_additional_fields));
         }
         return $sl_product_additional_data_to_sync;
+
+    }
+
+    /**
+     * Function to load attribute codes by an attribute set ID into class param
+     * @param int $entityTypeId             Entity type ID
+     * @param int $attributeSetId           Entity set ID
+     * @return void
+     */
+    private function loadAttributeCodesByAttributeSetId($entityTypeId, $attributeSetId){
+
+        $attributesByAttributeSetId = $this->connection->fetchAll(
+            $this->connection->select()
+                ->from(
+                    ['ea' => $this->slConnection->getTable('eav_attribute')],
+                    [
+                        \Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE,
+                    ]
+                )
+                ->where('ea.'.\Magento\Eav\Api\Data\AttributeInterface::ENTITY_TYPE_ID . ' = ?', $entityTypeId)
+                ->where('eea.'.\Magento\Eav\Api\Data\AttributeGroupInterface::ATTRIBUTE_SET_ID . ' = ?', $attributeSetId)
+                ->joinRight(
+                    ['eea' => $this->slConnection->getTable('eav_entity_attribute')],
+                    'ea.entity_type_id = eea.entity_type_id AND ea.attribute_id = eea.attribute_id',
+                    []
+                )
+                
+        );
+        
+        foreach ($attributesByAttributeSetId as $attributeByAttributeSetId){
+
+            if (!isset($this->attributeCodesByAttributeSetId[$attributeSetId])) $this->attributeCodesByAttributeSetId[$attributeSetId] = [];
+            $this->attributeCodesByAttributeSetId[$attributeSetId][$attributeByAttributeSetId['attribute_code']] = 0;
+
+        }
 
     }
 
