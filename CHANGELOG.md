@@ -1,10 +1,10 @@
 # Changelog
 
-## Dev version
+## [Dev version]
 
 ### Changed
 
-- Fix for strip_tags with null values
+- Fix for strip_tags with null values ([#8][i8])
 
 ## [2.7.1] - 2024-01-26
 
@@ -126,3 +126,5 @@
 ### Added
 
 - Is Anchor category field to process.
+
+[i8]: https://github.com/saleslayer/magento-community-plugin/issues/8
