@@ -63,6 +63,11 @@ Branch feature-295 will be installed (the branch name can be changed to any bran
 composer require saleslayer/magento-community-plugin:dev-feature_295
 ```
 
+To install the latest dev version:
+```
+composer require saleslayer/magento-community-plugin:2.7.x-dev
+```
+
 #### 1.1.2 Composer requirements
 Following Version guidance, check the plugin version to check which PHP and Magento version are required to install the plugin.
 
@@ -99,7 +104,7 @@ php bin/magento cache:clean
 |----------------|------------|-------------------------------|-------------------|---------------------------------------|----------|
 | [2.5.x]        | EOL        | >= 2.1.4, <= 2.4.0            | 7.3               | [Changelog 2.5.x][changelog-2.5.x]    | No       |
 | [2.6.x]        | Fixes only | >= 2.1.4, <= 2.4.5            | \>= 7.3, <= 8.1   | [Changelog 2.6.x][changelog-2.6.x]    | No       |
-| [2.7.x]        | Stable     | >= 2.4.4, <= 2.4.6            | 8.1, 8.2          | [Changelog 2.7.x][Changelog]          | Yes      |
+| [2.7.x]        | Stable     | >= 2.4.4, < 2.4.8             | 8.1, 8.2          | [Changelog 2.7.x][Changelog]          | Yes      |
 
 ## Branch 2.7.x Release recommended configuration
 

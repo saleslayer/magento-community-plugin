@@ -1,5 +1,11 @@
 # Changelog
 
+## Dev version
+
+### Changed
+
+- Fix for strip_tags with null values
+
 ## [2.7.1] - 2024-01-26
 
 ### Added
