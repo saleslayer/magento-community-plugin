@@ -7918,7 +7918,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     public function deleteSLLogs()
     {
 
-        $log_folder_files = scandir($this->sl_logs_path);
+        $log_folder_files = [];
+        if (is_dir($this->sl_logs_path)){
+            $log_folder_files = scandir($this->sl_logs_path);
+        }
         
         if (!empty($log_folder_files)) {
             foreach ($log_folder_files as $log_folder_file) {
@@ -8073,7 +8076,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
         $files = [];
 
-        $log_folder_files = scandir($this->sl_logs_path);
+        $log_folder_files = [];
+        if (is_dir($this->sl_logs_path)){
+            $log_folder_files = scandir($this->sl_logs_path);
+        }
 
         if (!empty($log_folder_files)) {
 
@@ -8367,7 +8373,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $response = [];
         $response[1] = [];
 
-        $log_folder_files = scandir($this->sl_logs_path);
+        $log_folder_files = [];
+        if (is_dir($this->sl_logs_path)){
+            $log_folder_files = scandir($this->sl_logs_path);
+        }
 
         if (!empty($log_folder_files)) {
 
