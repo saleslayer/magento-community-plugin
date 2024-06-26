@@ -180,6 +180,7 @@ class Syncdatacron extends Synccatalog
 
             $this->product_fields = [
                 'product_field_name',
+                'product_field_url_key',
                 'product_field_description',
                 'product_field_description_short',
                 'product_field_price',
@@ -780,7 +781,7 @@ class Syncdatacron extends Synccatalog
 
             foreach ($this->processed_items as $processed_item_type => $processed_item_type_count) {
                 
-                $this->slDebuger->debug('- Processed_items - type: '.$processed_item_type.' count: '.$processed_item_type_count, 'syncdata');
+                $this->slDebuger->debug('Processed items - type: '.$processed_item_type.' count: '.$processed_item_type_count, 'syncdata');
 
             }
 
