@@ -5,6 +5,7 @@
 ### Added
 
 - Added categories and products URL Key field to process.
+- Added categories position field to process.
 
 ### Changed
 
