@@ -103,6 +103,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $category_field_active                = 'section_active';
     protected $category_field_page_layout           = 'section_page_layout';
     protected $category_field_is_anchor             = 'section_is_anchor';
+    protected $category_field_position              = 'section_position';
     protected $category_path_base                   = BP.'/pub/media/catalog/category/';
     protected $category_images_sizes                = [];
     protected $category_is_anchor                   = 0;
@@ -1731,7 +1732,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->variant_sync_params_to_store['avoid_images_updates'] = $this->avoid_images_updates;
         $this->variant_sync_params_to_store['add_sl_id_to_format_name'] = $this->add_sl_id_to_format_name;
 
-
         if (!isset($schema['fields'][$this->format_field_name])) {
 
             $this->storage_process_errors[$this->format_field_name] = 'Product format name field must be defined in order to synchronize information.';
@@ -2418,6 +2418,16 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             $this->mg_category_id = $this->find_saleslayer_category_id_db($sl_id);
         }
 
+        $sl_category_position = null;
+        
+        if (isset($category['data'][$this->category_field_position]) &&
+            is_numeric($category['data'][$this->category_field_position]) &&
+            $category['data'][$this->category_field_position] >= 0) {
+            
+            $sl_category_position = intval($category['data'][$this->category_field_position]);
+        
+	    }
+        
         if (null !== $this->mg_category_id) {
 
             try{
@@ -2427,9 +2437,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
                 $mg_parent_category_path .= '/'.$mg_category_core_data['entity_id'];
                 $this->mg_category_level = $mg_category_core_data['level'];
 
-                if ($this->category_created) {
+                if ($this->category_created && !is_numeric($sl_category_position)) {
 
-                    $position = $this->connection->fetchOne(
+                    $sl_category_position = $this->connection->fetchOne(
                         $this->connection->select()
                             ->from(
                                 $category_table,
@@ -2439,12 +2449,19 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
                             ->group('parent_id')
                     );
 
-                    if (!$position) { $position = 0;
+                    if (!$sl_category_position) { 
+                        
+                        $sl_category_position = 0;
+                    
                     }
+                 
+                }
+
+                if (is_numeric($sl_category_position)){
 
                     $this->slConnection->slDBUpdate(
                         $category_table, 
-                        ['position' => $position], 
+                        ['position' => $sl_category_position], 
                         'entity_id = ' . $this->mg_category_id
                     );
 
@@ -2456,9 +2473,9 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
                 if ($mg_category_core_data['parent_id'] != $this->mg_parent_category_id || $mg_category_core_data['path'] != $mg_parent_category_path) {
 
-                    if (!$this->category_created) {
+                    if (!$this->category_created && !is_numeric($sl_category_position)){
 
-                        $position = $this->connection->fetchOne(
+                        $sl_category_position = $this->connection->fetchOne(
                             $this->connection->select()
                                 ->from(
                                     $category_table,
@@ -2468,12 +2485,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
                                 ->group('parent_id')
                         );
 
-                        if (!$position) { $position = 0;
+                        if (!$sl_category_position) { 
+                            
+                            $sl_category_position = 0;
+                        
                         }
                         
-                        $this->slConnection->slDBUpdate(
+			            $this->slConnection->slDBUpdate(
                             $category_table, 
-                            ['position' => $position], 
+                            ['position' => $sl_category_position], 
                             'entity_id = ' . $this->mg_category_id
                         );
 

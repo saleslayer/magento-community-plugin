@@ -175,7 +175,8 @@ class Syncdatacron extends Synccatalog
                 'category_field_active',
                 'category_images_sizes',
                 'category_field_page_layout',
-                'category_field_is_anchor'
+                'category_field_is_anchor',
+                'category_field_position'
             ];
 
             $this->product_fields = [
