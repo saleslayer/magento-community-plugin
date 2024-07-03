@@ -9282,45 +9282,91 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
      */
     private function setAttributes(&$entity, array $attributesValues, int $storeViewId)
     {
+        
         foreach ($attributesValues as $attrK => $attrV) {
+            
+            $attribute = $entity->getResource()->getAttribute($attrK);
 
-            if (is_array($attrV) && isset($attrV[0])) {
+            $multiselect_attribute = false;
+
+            if ($attribute !== false) {
+
+                if ($attribute->isScopeGlobal()) {
+
+                    $storeViewId = 0;
+
+                }
+
+                if ($attribute->usesSource() &&
+                    $attribute->getFrontendInput() == 'multiselect') {
+
+                    $multiselect_attribute = true;
+
+                }
+
+            }
+
+            if ($multiselect_attribute) {
+
+                $multiselect_values = [];
+                $first_element = true;
+
+                if (!is_array($attrV)) $attrV = [$attrV];
+
+                foreach ($attrV as $keyAV => $attribute_value) {
+                    
+                    if (trim($attribute_value) === '') continue;
+
+                    if ($keyAV !== array_key_first($attrV)) {
+                        
+			            $attribute = $entity->getResource()->getAttribute($attrK);
+
+		            }
+
+                    $multiselect_values[] = $this->synccatalogDataHelper->createOrGetOptionIdByValue($attribute, $attribute_value, $storeViewId);
+
+                }
+                
+                $attrV = $multiselect_values;
+                
+            }else if (is_array($attrV) && isset($attrV[0])) {
+
                 $attrV = $attrV[0];
+                
             }
 
             if ($attrK === 'visibility') {
+                
                 $entity->setData($attrK, $attrV);
                 continue;
+            
             }
 
-            if ($attrK === 'url_key'){
+            if ($attrK === 'url_key') {
 
                 $time_ini_get_valid_url_key = microtime(1);
                 $attrV = $this->getValidProductUrlKey($attrV, $storeViewId);
                 if ($this->sl_DEBBUG > 2) { 
                     $this->slDebuger->debug('# time_get_valid_url_key: ', 'timer', (microtime(1) - $time_ini_get_valid_url_key));
                 }
+
             }
 
-            $attribute = $entity->getResource()->getAttribute($attrK);
-
+            
             if ($attribute !== false) {
 
-                if ($attribute->isScopeGlobal()) {
-                    $storeViewId = 0;
-                }
+                if ($attribute->usesSource() &&
+                    !$multiselect_attribute &&
+                    $attrV !== '') {
 
-                if ($attribute->usesSource()) {
+                    $entity->setData($attrK, $this->synccatalogDataHelper->createOrGetOptionIdByValue($attribute, $attrV, $storeViewId));
+    
+                }else{
 
-                    if ($attrV !== '') {
-                        $entity->setData($attrK, $this->synccatalogDataHelper->createOrGetOptionIdByValue($attribute, $attrV, $storeViewId));
-                    }else{
-                        $entity->setData($attrK, $attrV);
-                    }
-
-                } else {
                     $entity->setData($attrK, $attrV);
+
                 }
+
             }
                 
         }
@@ -9412,147 +9458,147 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     {
 
         switch ($attribute['frontend_input']){
-        case 'media_image':
+            case 'media_image':
 
-            if ($sl_value == '') {
+                if ($sl_value == '') {
 
-                return false;
+                    return false;
 
-            }else{
+                }else{
 
-                if (!isset($this->product_additional_fields_images[$entityId][$attribute['attribute_code']])) {
+                    if (!isset($this->product_additional_fields_images[$entityId][$attribute['attribute_code']])) {
 
-                    if (null !== $this->mg_format_id) {
+                        if (null !== $this->mg_format_id) {
 
-                        $type = 'product_formats';
+                            $type = 'product_formats';
 
-                    }else{
-                        
-                        $type = 'products';
-
-                    }
+                        }else{
                             
-                    $media = $this->get_media_field_value($type, $attribute['attribute_code'], $sl_value);
+                            $type = 'products';
 
-                    if ($media) {
+                        }
+                                
+                        $media = $this->get_media_field_value($type, $attribute['attribute_code'], $sl_value);
 
-                        $this->product_additional_fields_images[$entityId][$attribute['attribute_code']] = $media;
+                        if ($media) {
+
+                            $this->product_additional_fields_images[$entityId][$attribute['attribute_code']] = $media;
+
+                        }
+
+                    }
+
+                } 
+
+                break;
+
+            case 'multiselect':
+
+                $value_to_update = $sl_options = '';
+
+                (is_array($sl_value)) ? $sl_options = $sl_value : $sl_options = array($sl_value);
+
+                foreach ($sl_options as $additional_field_value) {
+
+                    $value_found = $this->find_attribute_option_value_db($attribute['attribute_set_id'], $attribute['attribute_id'], $additional_field_value, $store_view_id);
+                    
+                    if ($value_found) {
+
+                        if ($value_to_update == '') {
+
+                            $value_to_update = $value_found;
+
+                        }else{
+
+                            $value_to_update .= ','.$value_found;
+
+                        }
 
                     }
 
                 }
 
-            } 
+                if ($value_to_update != '') {
 
-            break;
-
-        case 'multiselect':
-
-            $value_to_update = $sl_options = '';
-
-            (is_array($sl_value)) ? $sl_options = $sl_value : $sl_options = array($sl_value);
-
-            foreach ($sl_options as $additional_field_value) {
-
-                $value_found = $this->find_attribute_option_value_db($attribute['attribute_set_id'], $attribute['attribute_id'], $additional_field_value, $store_view_id);
-                   
-                if ($value_found) {
-
-                    if ($value_to_update == '') {
-
-                        $value_to_update = $value_found;
-
-                    }else{
-
-                        $value_to_update .= ','.$value_found;
-
-                    }
+                    return $value_to_update;
 
                 }
 
-            }
+                break;
 
-            if ($value_to_update != '') {
+            case 'select':
+
+                $additional_field_value = '';
+                    
+                (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
+                    
+                $attribute_value_id = $this->find_attribute_option_value_db($attribute['attribute_set_id'], $attribute['attribute_id'], $additional_field_value, $store_view_id);
+                                            
+                if ($attribute_value_id) {
+
+                    return $attribute_value_id;
+                    
+                }
+
+                break;
+
+            case 'price':
+
+                $additional_field_value = '';
+                    
+                (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
+
+                if (!is_numeric($additional_field_value) && filter_var($additional_field_value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)) {
+
+                    $value_to_update = filter_var($additional_field_value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
+                }else{
+
+                    $value_to_update = $additional_field_value;
+
+                }
 
                 return $value_to_update;
 
-            }
+                    break;
 
-            break;
+            case 'boolean':
 
-        case 'select':
+                $additional_field_value = '';
 
-            $additional_field_value = '';
-                
-            (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
-                
-            $attribute_value_id = $this->find_attribute_option_value_db($attribute['attribute_set_id'], $attribute['attribute_id'], $additional_field_value, $store_view_id);
-                                        
-            if ($attribute_value_id) {
+                (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
+                    
+                $value_to_update = filter_var($additional_field_value, FILTER_VALIDATE_BOOLEAN);
 
-                return $attribute_value_id;
-                
-            }
+                return $value_to_update;
+                    
+                    break;
 
-            break;
+            case 'date':
 
-        case 'price':
+                $additional_field_value = '';
 
-            $additional_field_value = '';
-                
-            (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
+                (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
+                    
+                return $additional_field_value;
+                    
+                    break;
 
-            if (!is_numeric($additional_field_value) && filter_var($additional_field_value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)) {
-
-                $value_to_update = filter_var($additional_field_value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-
-            }else{
-
-                $value_to_update = $additional_field_value;
-
-            }
-
-            return $value_to_update;
+            case 'weee':
 
                 break;
 
-        case 'boolean':
+            default:
 
-            $additional_field_value = '';
+                $additional_field_value = '';
+                    
+                (is_array($sl_value)) ? $additional_field_value = implode(', ', array_filter($sl_value, array($this, 'array_filter_empty_value'))) : $additional_field_value = $sl_value;
+                    
+                $additional_field_value = $this->sl_check_html_text($additional_field_value);
 
-            (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
-                
-            $value_to_update = filter_var($additional_field_value, FILTER_VALIDATE_BOOLEAN);
-
-            return $value_to_update;
-                
-                break;
-
-        case 'date':
-
-            $additional_field_value = '';
-
-            (is_array($sl_value)) ? $additional_field_value = reset($sl_value) : $additional_field_value = $sl_value;
-                
-            return $additional_field_value;
-                
-                break;
-
-        case 'weee':
-
-            break;
-
-        default:
-
-            $additional_field_value = '';
-                
-            (is_array($sl_value)) ? $additional_field_value = implode(', ', array_filter($sl_value, array($this, 'array_filter_empty_value'))) : $additional_field_value = $sl_value;
-                
-            $additional_field_value = $this->sl_check_html_text($additional_field_value);
-
-            return $additional_field_value;
-                
-                break;
+                return $additional_field_value;
+                    
+                    break;
         }
 
         return '';
