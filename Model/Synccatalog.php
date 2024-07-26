@@ -9740,6 +9740,41 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
             if ($attribute !== false) {
 
+                if ($attribute->getFrontendInput() == 'media_image') {
+               
+                    $entity_id = $entity->getEntityId();
+                    $attribute_code = $attribute->getAttributeCode();
+                    
+                    if (!isset($this->product_additional_fields_images[$entity_id][$attribute_code])) {
+
+                        if (null !== $this->mg_format_id) {
+
+                            $type = 'product_formats';
+
+                        }else{
+                            
+                            $type = 'products';
+
+                        }
+    
+                        if ($attrV !== ''){
+
+                            $media = $this->get_media_field_value($type, $attribute_code, $attrV);
+                            
+                            if ($media) {
+
+                                $this->product_additional_fields_images[$entity_id][$attribute_code] = $media;
+
+                            }
+
+                        }
+                    
+                    }
+                   
+                    continue;
+
+                }
+
                 if ($attribute->isScopeGlobal()) {
 
                     $storeViewId = 0;
