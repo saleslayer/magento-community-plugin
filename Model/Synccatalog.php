@@ -4028,6 +4028,22 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             $this->processImage($mg_item_id, $main_image_to_process['image_name'], $main_image_to_process['url'], $main_image_to_process['media_attribute'], $main_image_to_process['position'], $main_image_file_size);
 
             unset($final_images[$main_image_to_process['image_name']]);
+
+            if (!empty($existing_images_to_delete)){
+
+                $main_image_to_process_filename = '/'.substr($main_image_to_process['image_name'], 0, 1).'/'.substr($main_image_to_process['image_name'], 1, 1).'/'.$main_image_to_process['image_name'];
+            
+                foreach ($existing_images_to_delete as $keyEITD => $existing_image_to_delete){
+
+                    if ($main_image_to_process_filename == $existing_image_to_delete['filename']){
+
+                        unset($existing_images_to_delete[$keyEITD]);
+
+                    }
+
+                }
+
+            }
             
             if ($this->sl_DEBBUG > 2) { $this->slDebuger->debug('# time_save_main_image: ', 'timer', (microtime(1) - $time_ini_save_main_image));
             }
@@ -4311,7 +4327,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
                 
                     if (!empty($images[$img_format])) {
     
-                        $image_url = $images[$img_format];                
+                        $image_url = $images[$img_format];
                         $image_url_info = pathinfo($image_url);
     
                         if (strpos($image_url, '%') !== false) {
