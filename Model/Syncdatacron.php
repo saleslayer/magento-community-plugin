@@ -25,11 +25,15 @@ use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
+use Magento\Framework\App\ProductMetadataInterface as productMetadata;
+use Magento\Framework\Module\Dir\Reader as reader;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
+use Saleslayer\Synccatalog\Helper\slModule as slModule;
+use Saleslayer\Synccatalog\Helper\slAnalytics as slAnalytics;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
 use \Zend_Db_Expr as Expr;
 
@@ -68,6 +72,8 @@ class Syncdatacron extends Synccatalog
         slConnection $slConnection,
         slDebuger $slDebuger,
         slJson $slJson,
+        slModule $slModule,
+        slAnalytics $slAnalytics,
         synccatalogConfigHelper $synccatalogConfigHelper,
         directoryListFilesystem $directoryListFilesystem,
         categoryModel $categoryModel,
@@ -88,6 +94,8 @@ class Syncdatacron extends Synccatalog
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
+        productMetadata $productMetadata,
+        reader $reader,
         productRepository $productRepository,
         resource $resource = null,
         resourceCollection $resourceCollection = null,
@@ -101,6 +109,8 @@ class Syncdatacron extends Synccatalog
             $slConnection,
             $slDebuger,
             $slJson,
+            $slModule,
+            $slAnalytics,
             $synccatalogConfigHelper,
             $directoryListFilesystem,
             $categoryModel, 
@@ -121,6 +131,8 @@ class Syncdatacron extends Synccatalog
             $countryOfManufacture,
             $layoutSource,
             $stockRegistryInterface,
+            $productMetadata,
+            $reader,
             $productRepository,
             $resource,
             $resourceCollection,
@@ -465,8 +477,9 @@ class Syncdatacron extends Synccatalog
         if ($this->clean_main_debug_file) { file_put_contents($this->sl_logs_path.'_debbug_log_saleslayer_'.date('Y-m-d').'.dat', "");
         }
 
-        $this->slDebuger->debug("==== Sync Data DB INIT ".date('Y-m-d H:i:s')." ====", 'syncdata');
-        
+        $this->slDebuger->debug("==== Sync Data DB INIT Mod.ver: ".$this->module_version." - ".date('Y-m-d H:i:s')." ====", 'syncdata');
+        $this->slDebuger->debug("==== Magento version: ". $this->productMetadata->getVersion() . " - " . $this->productMetadata->getEdition() ." ====", 'syncdata');
+
         $this->clearExcededAttemps();
 
         $this->syncdata_pid = getmypid();

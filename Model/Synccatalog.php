@@ -33,11 +33,15 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
+use Magento\Framework\App\ProductMetadataInterface as productMetadata;
+use Magento\Framework\Module\Dir\Reader as reader;
 use Saleslayer\Synccatalog\Model\SalesLayerConn as SalesLayerConn;
 use Saleslayer\Synccatalog\Helper\Data as synccatalogDataHelper;
 use Saleslayer\Synccatalog\Helper\slConnection as slConnection;
 use Saleslayer\Synccatalog\Helper\slDebuger as slDebuger;
 use Saleslayer\Synccatalog\Helper\slJson as slJson;
+use Saleslayer\Synccatalog\Helper\slModule as slModule;
+use Saleslayer\Synccatalog\Helper\slAnalytics as slAnalytics;
 use Saleslayer\Synccatalog\Helper\Config as synccatalogConfigHelper;
 use \Zend_Db_Expr as Expr;
  
@@ -48,6 +52,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $slConnection;
     protected $slDebuger;
     protected $slJson;
+    protected $slModule;
+    protected $slAnalytics;
     protected $synccatalogConfigHelper;
     protected $categoryModel;
     protected $productModel;
@@ -67,11 +73,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $countryOfManufacture;
     protected $layoutSource;
     protected $stockRegistryInterface;
+    protected $productMetadata;
+    protected $reader;
     protected $salesLayerConn;
     protected $connection;
     protected $directoryListFilesystem;
     protected $_productRepository;
     
+    protected $module_version;
+
     protected $sl_API_version    = '1.18';
     protected $sl_connector_type = 'CN_MAGNT';
     protected $sl_conn_pagination_n_items = 5000;
@@ -82,6 +92,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $sync_data_hour_until = 0;
     protected $format_type_creation = 'simple';
     protected $add_sl_id_to_format_name = 1;
+    protected $all_analytics_data = 1;
     protected $delete_sl_logs_since_days = 0;
 
     protected $comp_id;
@@ -289,6 +300,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     protected $stored_sl_data                       = [];
 
     protected $attributeCodesByAttributeSetId       = [];
+
+    private $analyticsAPIItemCount = [];
     
     /**
      * Function __construct
@@ -300,6 +313,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
      * @param slConnection                        $slConnection                        Saleslayer\Synccatalog\Helper\slConnection
      * @param slDebuger                           $slDebuger                           Saleslayer\Synccatalog\Helper\slDebuger
      * @param slJson                              $slJson                              Saleslayer\Synccatalog\Helper\slJson
+     * @param slModule                            $slModule                            Saleslayer\Synccatalog\Helper\slModule
+     * @param slAnalytics                         $slAnalytics                         Saleslayer\Synccatalog\Helper\slAnalytics
      * @param synccatalogConfigHelper             $synccatalogConfigHelper             Saleslayer\Synccatalog\Helper\Config
      * @param directoryListFilesystem             $directoryListFilesystem             \Magento\Framework\Filesystem\DirectoryList
      * @param categoryModel                       $categoryModel                       \Magento\Catalog\Model\Category
@@ -320,6 +335,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
      * @param countryOfManufacture                $countryOfManufacture                \Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture
      * @param layoutSource                        $layoutSource                        \Magento\Catalog\Model\Category\Attribute\Source\Layout
      * @param stockRegistryInterface              $stockRegistryInterface              \Magento\CatalogInventory\Api\StockRegistryInterface
+     * @param productMetadata                     $productMetadata                     \Magento\Framework\App\ProductMetadataInterface
+     * @param reader                              $reader                              \Magento\Framework\Module\Dir\Reader 
      * @param resource|null                       $resource                            \Magento\Framework\Model\ResourceModel\AbstractResource
      * @param resourceCollection|null             $resourceCollection                  \Magento\Framework\Data\Collection\AbstractDb
      * @param productRepository                   $productRepository                   \Magento\Catalog\Api\ProductRepositoryInterface
@@ -333,6 +350,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         slConnection $slConnection,
         slDebuger $slDebuger,
         slJson $slJson,
+        slModule $slModule,
+        slAnalytics $slAnalytics,
         synccatalogConfigHelper $synccatalogConfigHelper,
         directoryListFilesystem  $directoryListFilesystem,
         categoryModel $categoryModel,
@@ -353,6 +372,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
+        productMetadata $productMetadata,
+        reader $reader,
         productRepository $productRepository,
         resource $resource = null,
         resourceCollection $resourceCollection = null,
@@ -364,6 +385,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->slConnection                             = $slConnection;
         $this->slDebuger                                = $slDebuger;
         $this->slJson                                   = $slJson;
+        $this->slModule                                 = $slModule;
+        $this->slAnalytics                              = $slAnalytics;
         $this->synccatalogConfigHelper                  = $synccatalogConfigHelper;
         $this->directoryListFilesystem                  = $directoryListFilesystem;
         $this->categoryModel                            = $categoryModel;
@@ -385,6 +408,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->countryOfManufacture                     = $countryOfManufacture;
         $this->layoutSource                             = $layoutSource;
         $this->stockRegistryInterface                   = $stockRegistryInterface;
+        $this->productMetadata                          = $productMetadata;
+        $this->reader                                   = $reader;
         $this->connection                               = $this->resourceConnection->getConnection();
 
     }
@@ -418,7 +443,39 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->sync_data_hour_until = $this->synccatalogConfigHelper->getSyncDataHourUntil();
         $this->format_type_creation = $this->synccatalogConfigHelper->getFormatTypeCreation();
         $this->add_sl_id_to_format_name = $this->synccatalogConfigHelper->getAddSLIDToFormatName();
+        $this->all_analytics_data = $this->synccatalogConfigHelper->getAllAnalyticsData();
         $this->delete_sl_logs_since_days = $this->synccatalogConfigHelper->getDeleteSLLogsSinceDays();
+        $this->module_version = $this->slModule->getModuleVersion();
+
+    }
+
+    /**
+     * Function to validate connector ID
+     * 
+     * @param string $connector_id connector ID
+     * @return bool validation result
+     */
+    private function validateConnectorID($connector_id){
+
+        if (null === $connector_id || $connector_id === '') {
+        
+            $this->slDebuger->debug('## Error. Invalid Sales Layer Connector ID.');
+            throw new \InvalidArgumentException('Invalid Sales Layer Connector ID.');
+            
+        }else{
+        
+            $conn_record = $this->load($connector_id, 'connector_id');
+
+            if (!$conn_record) {
+        
+                $this->slDebuger->debug('## Error. Sales Layer master data corrupted.');
+                throw new \InvalidArgumentException('Sales Layer master data corrupted.');
+        
+            }
+
+        }
+
+        return true;
 
     }
 
@@ -432,23 +489,11 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     private function get_conn_field($connector_id, $field_name)
     {
 
-        if (null === $connector_id || $connector_id === '') {
-        
-            $this->slDebuger->debug('## Error. Invalid Sales Layer Connector ID.');
-            throw new \InvalidArgumentException('Invalid Sales Layer Connector ID.');
+        if ($this->validateConnectorID($connector_id)){
             
-        }else{
-        
-            $config_record = $this->load($connector_id, 'connector_id');
+            $conn_record = $this->load($connector_id, 'connector_id');
 
-            if (!$config_record) {
-        
-                $this->slDebuger->debug('## Error. Sales Layer master data corrupted.');
-                throw new \InvalidArgumentException('Sales Layer master data corrupted.');
-        
-            }
-
-            $conn_data = $config_record->getData();
+            $conn_data = $conn_record->getData();
 
             $field_value = '';
 
@@ -1086,6 +1131,169 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Function to load analytics API item count
+     *
+     * @param array $responseData              response data to check
+     * @return void   
+     */
+    private function loadAnalyticsAPIItemCount($responseData)
+    {
+        
+        $counterTypes = ['deleted', 'modified'];
+
+        foreach ($responseData as $tableName => $tableInfo){
+            if (!isset($this->analyticsAPIItemCount[$tableName])){
+                $this->analyticsAPIItemCount[$tableName] = [];
+            }
+
+            foreach ($counterTypes as $counterType){
+                $counterKey = 'count_'.$counterType;
+                
+                if (isset($tableInfo[$counterKey])){
+                    if (!isset($this->analyticsAPIItemCount[$tableName][$counterType])){
+                        $this->analyticsAPIItemCount[$tableName][$counterType] = 0;
+                    }
+                    
+                    $this->analyticsAPIItemCount[$tableName][$counterType] += $tableInfo[$counterKey];
+                }
+            }
+        }
+    }
+
+    /**
+     * Function to get connector analytics data
+     * 
+     * @param string $connectorId connector ID
+     * @return array connector analytics data
+     */
+    private function getConnectorAnalyticsData($connectorId)
+    {
+
+        if (!$this->validateConnectorID($connectorId)){
+            return [];
+        } 
+            
+        $connRecord = $this->load($connectorId, 'connector_id');
+        $connectorData = $connRecord->getData();
+        if (empty($connectorData)){
+            return [];
+        }
+
+        $moduleDir = $this->reader->getModuleDir('', 'Saleslayer_Synccatalog');
+        $moduleName = basename($moduleDir);
+        
+        $analyticsData = [
+            'conn_code' => $connectorId,
+            'comp_id' => $connectorData['comp_id'],
+            'secret_key' => $connectorData['secret_key'],
+            'conn_type' => $this->sl_connector_type,
+            'last_update' => $connectorData['last_update'],
+            'api_item_count' => json_encode($this->analyticsAPIItemCount),
+            'plugin_version' => $moduleName.' - '.$this->module_version,
+            'plugin_config' => [
+                'api_version' => $this->sl_API_version,
+                'pagination_n_items' => $this->sl_conn_pagination_n_items,
+                'sql_items_to_insert' => $this->sql_to_insert_limit,
+                'avoid_stock_update' => $connectorData['avoid_stock_update'],
+                'all_analytics_data' => $this->all_analytics_data
+                ]
+            ];
+            
+            if ($this->all_analytics_data == 1){
+
+                $storeViewsData = $this->getConnectorAnalyticsStoreViewsData($connectorData);
+                $formatConfigurableAttributesData = $this->getConnectorAnalyticsFormatConfigurableAttributesData($connectorData);
+
+                $analyticsData['ecommerce_version'] = $this->productMetadata->getEdition().' - '.$this->productMetadata->getVersion();
+                $analyticsData['plugin_config'] = array_merge(
+                    $analyticsData['plugin_config'], 
+                    [
+                        'debug_level' => $this->sl_DEBBUG,
+                        'store_view_ids' => $storeViewsData,
+                        'format_configurable_attributes' => $formatConfigurableAttributesData,
+                    ]
+                );
+        }
+
+        return $analyticsData;
+    }
+
+    /**
+     * Function to get connector analytics store views data
+     * 
+     * @param array $connectorData connector data
+     * @return $string store views data
+     */
+    private function getConnectorAnalyticsStoreViewsData(array $connectorData)
+    {
+
+        if (empty($connectorData['store_view_ids'])) {
+            return $connectorData['store_view_ids'];
+        }
+
+        $storeTable = $this->slConnection->getTable('store');
+        if ($storeTable === null) {
+            return $connectorData['store_view_ids'];
+        }
+
+        $allStoresData = $this->connection->fetchAll(
+            $this->connection->select()
+                ->from($storeTable, ['store_id', 'name'])
+        );
+
+        if (empty($allStoresData)) {
+            return $connectorData['store_view_ids'];
+        }
+
+        $connectorStoreViewIds = $this->slJson->unserialize($connectorData['store_view_ids']);
+        $storeViewsData = [];
+
+        foreach ($allStoresData as $storeData) {
+            if (in_array($storeData['store_id'], $connectorStoreViewIds)) {
+                $storeViewsData[$storeData['store_id']] = $storeData['name'];
+            }
+        }
+
+        return !empty($storeViewsData)
+            ? $this->slJson->serialize($storeViewsData)
+            : $connectorData['store_view_ids'];
+    }
+
+    /**
+     * Function to get connector analytics format configurable attributes data
+     * 
+     * @param array $connectorData connector data
+     * @return $string format configurable attributes data
+     */
+    private function getConnectorAnalyticsFormatConfigurableAttributesData(array $connectorData)
+    {
+
+        if (empty($connectorData['format_configurable_attributes'])) {
+            return $connectorData['format_configurable_attributes'];
+        }
+
+        $connectorFormatConfigurableAttributesIds = $this->slJson->unserialize($connectorData['format_configurable_attributes']);
+
+        if (!is_array($connectorFormatConfigurableAttributesIds) || empty($connectorFormatConfigurableAttributesIds)){
+            return $connectorData['format_configurable_attributes'];
+        }
+
+        $formatConfigurableAttributesData = [];
+
+        foreach ($connectorFormatConfigurableAttributesIds as $connectorFormatConfigurableAttributeId){
+            $configurableAttribute = $this->getAttributeById($connectorFormatConfigurableAttributeId, $this->product_entity_type_id);
+
+            if (!empty($configurableAttribute) && isset($configurableAttribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE])) {
+                $formatConfigurableAttributesData[$connectorFormatConfigurableAttributeId] = strtolower($configurableAttribute[\Magento\Eav\Api\Data\AttributeInterface::ATTRIBUTE_CODE]);
+            }
+        }
+
+        return !empty($formatConfigurableAttributesData)
+            ? $this->slJson->serialize($formatConfigurableAttributesData)
+            : $connectorData['format_configurable_attributes'];
+    }
+
+    /**
      * Function to store connector's data to synchronize.
      *
      * @param  string   $connector_id Sales Layer connector id
@@ -1107,9 +1315,10 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             $this->slDebuger->debug('### time_store_sync_data: ', 'timer', (microtime(1) - $time_ini_data));
             return "There are still ".$items_processing." items processing, wait until is finished and synchronize again.";
         }
-        
-        $this->slDebuger->debug("\r\n==== Store Sync Data INIT ====\r\n");
-        
+
+        $this->slDebuger->debug("\r\n==== Store Sync Data INIT - Mod.ver: ".$this->module_version." ====\r\n");
+        $this->slDebuger->debug("==== Magento version: ". $this->productMetadata->getVersion() . " - " . $this->productMetadata->getEdition() ." ====");
+
         $this->updateLastSync($last_sync, $connector_id);
 
         $slconn = $this->connect_saleslayer($connector_id, $this->get_conn_field($connector_id, 'secret_key'));
@@ -1167,6 +1376,8 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             if ($slconn->have_next_page() && $slconn->get_next_page_info()) { $is_next_page = true;
             }
 
+            $this->loadAnalyticsAPIItemCount($pagination_response_data);
+
             if ($this->checkIfResponseDataIsEmpty($pagination_response_data)) {
 
                 $info_processed = true;
@@ -1215,6 +1426,12 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         }while ($is_next_page);
 
         if ($info_processed && $this->format_as_products_schema) { $this->cleanFormatAsProductsUnusedCategories();
+        }
+
+        $analyticsData = $this->getConnectorAnalyticsData($connector_id);
+
+        if ($this->slAnalytics->loadAnalyticsData($analyticsData)){
+            $this->slAnalytics->sendAnalyticsData();
         }
         
         $this->slDebuger->debug('### time_store_sync_data: ', 'timer', (microtime(1) - $time_ini_data));
@@ -4032,7 +4249,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             if (!empty($existing_images_to_delete)){
 
                 $main_image_to_process_filename = '/'.substr($main_image_to_process['image_name'], 0, 1).'/'.substr($main_image_to_process['image_name'], 1, 1).'/'.$main_image_to_process['image_name'];
-            
                 foreach ($existing_images_to_delete as $keyEITD => $existing_image_to_delete){
 
                     if ($main_image_to_process_filename == $existing_image_to_delete['filename']){
@@ -4576,7 +4792,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
                             $this->checkExistingImagePosition($item_data['value_id'], $item_data['position'], $image_media_position);
 
                             if (!$main_image_processed && $main_image_to_process_image_name == $item_filename) {
-
                                 
                                 $main_image_processed = true;
 
