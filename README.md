@@ -120,7 +120,6 @@ php bin/magento cache:clean
 > **Note**. 
 > See also [Magento system requirements][magento-system-requirements] for the right environment choice.
 
-
 [Magento Community]: https://business.adobe.com/products/magento/community.html
 [website]: https://support.saleslayer.com/category/magento
 [Changelog]: ./CHANGELOG.md
