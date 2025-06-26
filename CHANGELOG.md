@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.7.4] - 2025-06-24
+
+### Changed
+
+- Compatibility with MG version 2.4.8-p1 (PHP 8.3).
+
+### Tested
+
+- Tested on Magento 2.4.8-p1 / PHP 8.3.16
+
 ## [2.7.3] - 2025-01-31
 
 ### Changed

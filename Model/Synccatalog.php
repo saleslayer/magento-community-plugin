@@ -623,7 +623,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
                 $config_record->setData($field_name, $field_value);
                 $config_record->save();
-                if ($this->sl_DEBBUG > 1) { $this->slDebuger->debug('Connector field: $field_name updated to: $field_value');
+                if ($this->sl_DEBBUG > 1) { $this->slDebuger->debug('Connector field: '.$field_name.' updated to: '.$field_value);
                 }
 
             }catch(\Exception $e){
@@ -11632,12 +11632,6 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
 
                 $format_configurable_attribute_code_lan = $format_configurable_attribute_code;
 
-                if (isset($schema['fields'][$format_configurable_attribute_code]) && $schema['fields'][$format_configurable_attribute_code]['has_multilingual']) {
-
-                    $format_configurable_attribute_code_lan .= '_'.$this->sl_language;
-
-                }
-                
                 if (isset($format_data[$format_configurable_attribute_code_lan])) {
 
                     $sl_format_value = $this->getCodeValue($format_data, $format_configurable_attribute_code,  $format_configurable_attribute_code_lan);
