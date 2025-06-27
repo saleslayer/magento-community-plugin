@@ -1319,7 +1319,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
             return "There are still ".$items_processing." items processing, wait until is finished and synchronize again.";
         }
 
-        $this->slDebuger->debug("\r\n==== Store Sync Data INIT - Mod.ver: ".$this->module_version." ====\r\n");
+        $this->slDebuger->debug("\r\n==== Store Sync Data INIT - Mod.ver: ".$this->module_version." - ".$connector_id." ====\r\n");
         $this->slDebuger->debug("==== Magento version: ". $this->productMetadata->getVersion() . " - " . $this->productMetadata->getEdition() ." ====");
 
         $this->updateLastSync($last_sync, $connector_id);
