@@ -5,6 +5,7 @@
 ### Changed
 
 - Compatibility with MG version 2.4.8-p1 (PHP 8.3).
+- Fix for multi-lan configurable attributes.
 
 ### Tested
 
