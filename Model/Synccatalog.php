@@ -27,6 +27,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGen
 use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
 use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
+use Magento\Framework\App\CacheInterface;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\Catalog\Model\Product\Attribute\Backend\Media\ImageEntryConverter;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
@@ -370,14 +371,15 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         catalogInventoryConfiguration $catalogInventoryConfiguration,
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
+        CacheInterface $cacheInterface,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
         productMetadata $productMetadata,
         reader $reader,
         productRepository $productRepository,
-        resource $resource = null,
-        resourceCollection $resourceCollection = null,
+        ?resource $resource = null,
+        ?resourceCollection $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
@@ -406,6 +408,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->catalogInventoryConfiguration            = $catalogInventoryConfiguration;
         $this->eavConfig                                = $eavConfig;
         $this->typeListInterface                        = $typeListInterface;
+        $this->cacheInterface                           = $cacheInterface;
         $this->countryOfManufacture                     = $countryOfManufacture;
         $this->layoutSource                             = $layoutSource;
         $this->stockRegistryInterface                   = $stockRegistryInterface;

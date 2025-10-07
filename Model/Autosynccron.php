@@ -22,6 +22,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlPathGenerator as productUrlPathGen
 use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguration;
 use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
+use Magento\Framework\App\CacheInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
@@ -78,14 +79,15 @@ class Autosynccron extends Synccatalog
         catalogInventoryConfiguration $catalogInventoryConfiguration,
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
+        CacheInterface $cacheInterface,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
         productMetadata $productMetadata,
         reader $reader,
         productRepository $productRepository,
-        resource $resource = null,
-        resourceCollection $resourceCollection = null,
+        ?resource $resource = null,
+        ?resourceCollection $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -115,6 +117,7 @@ class Autosynccron extends Synccatalog
             $catalogInventoryConfiguration,
             $eavConfig,
             $typeListInterface,
+            $cacheInterface,
             $countryOfManufacture,
             $layoutSource,
             $stockRegistryInterface,
