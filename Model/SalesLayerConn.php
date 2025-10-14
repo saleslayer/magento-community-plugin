@@ -102,7 +102,7 @@ class SalesLayerConn
      * @param string $url       Url to SalesLayer API connection
      * @param bool   $forceuft8 Set PHP system default charset to utf-8
      */
-    public function __construct($codeConn = null, $secretKey = null, ?bool $SSL = null, ?string $url = null, $forceuft8 = true)
+    public function __construct(?string $codeConn = null, ?string $secretKey = null, ?bool $SSL = null, ?string $url = null, $forceuft8 = true)
     {
         if ($this->has_system_requirements()) {
             if (true == $forceuft8) {

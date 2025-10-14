@@ -842,7 +842,7 @@ class Syncdatacron extends Synccatalog
     {
         $time_ini_clean_all_caches = microtime(1);
 
-        // Limpiar solo por tags de entidades específicas
+        // Clean only by specific entity tags.
         $tags = [];
 
         // Generate tags for products
