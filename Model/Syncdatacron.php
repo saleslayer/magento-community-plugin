@@ -23,6 +23,7 @@ use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguratio
 use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use Magento\Framework\App\CacheInterface;
+use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
@@ -68,6 +69,13 @@ class Syncdatacron extends Synccatalog
     protected $cacheInterface;
 
     /**
+     * Full Page Cache type for Varnish/Fastly integration
+     *
+     * @var FullPageCache
+     */
+    protected $fullPageCache;
+
+    /**
      * Sales Layer Syncdata constructor.
      *
      * @return void
@@ -100,6 +108,7 @@ class Syncdatacron extends Synccatalog
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
         CacheInterface $cacheInterface,
+        FullPageCache $fullPageCache,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
@@ -138,6 +147,7 @@ class Syncdatacron extends Synccatalog
             $eavConfig,
             $typeListInterface,
             $cacheInterface,
+            $fullPageCache,
             $countryOfManufacture,
             $layoutSource,
             $stockRegistryInterface,
@@ -150,6 +160,7 @@ class Syncdatacron extends Synccatalog
         );
 
         $this->cacheInterface = $cacheInterface;
+        $this->fullPageCache = $fullPageCache;
 
     }
 
@@ -862,12 +873,21 @@ class Syncdatacron extends Synccatalog
         }
 
         if (!empty($tags)) {
+            // Clean internal cache (Redis/File) by tags
             $time_ini_clean_cache = microtime(1);
             $this->cacheInterface->clean($tags);
             if ($this->sl_DEBBUG > 1) {
-                $this->slDebuger->debug('### time_clean_cache_by_tags: ', 'timer', (microtime(1) - $time_ini_clean_cache));
+                $this->slDebuger->debug('### time_clean_internal_cache_by_tags: ', 'timer', (microtime(1) - $time_ini_clean_cache));
             }
-            $this->slDebuger->debug('Cache cleaned for '.count($tags).' entity tags: '.implode(', ', array_slice($tags, 0, 10)).(count($tags) > 10 ? '...' : ''), 'syncdata');
+            $this->slDebuger->debug('Internal cache cleaned for '.count($tags).' entity tags: '.implode(', ', array_slice($tags, 0, 10)).(count($tags) > 10 ? '...' : ''), 'syncdata');
+
+            // Clean Full Page Cache (Varnish/Fastly) by tags
+            $time_ini_clean_fpc = microtime(1);
+            $this->fullPageCache->clean('matchingAnyTag', $tags);
+            if ($this->sl_DEBBUG > 1) {
+                $this->slDebuger->debug('### time_clean_full_page_cache_by_tags: ', 'timer', (microtime(1) - $time_ini_clean_fpc));
+            }
+            $this->slDebuger->debug('Full Page Cache (Varnish/Fastly) cleaned for '.count($tags).' entity tags.', 'syncdata');
         } else {
             $this->slDebuger->debug('No valid entity IDs provided for cache cleaning.', 'syncdata');
         }

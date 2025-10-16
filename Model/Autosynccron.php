@@ -23,6 +23,7 @@ use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguratio
 use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use Magento\Framework\App\CacheInterface;
+use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use Magento\Catalog\Model\Product\Attribute\Source\Countryofmanufacture as countryOfManufacture;
 use Magento\Catalog\Model\Category\Attribute\Source\Layout as layoutSource;
 use Magento\CatalogInventory\Api\StockRegistryInterface as stockRegistryInterface;
@@ -80,6 +81,7 @@ class Autosynccron extends Synccatalog
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
         CacheInterface $cacheInterface,
+        FullPageCache $fullPageCache,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
@@ -118,6 +120,7 @@ class Autosynccron extends Synccatalog
             $eavConfig,
             $typeListInterface,
             $cacheInterface,
+            $fullPageCache,
             $countryOfManufacture,
             $layoutSource,
             $stockRegistryInterface,

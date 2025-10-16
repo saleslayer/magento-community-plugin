@@ -28,6 +28,7 @@ use Magento\CatalogInventory\Model\Configuration as catalogInventoryConfiguratio
 use Magento\Eav\Model\Config as eavConfig;
 use Magento\Framework\App\Cache\TypeListInterface as typeListInterface;
 use Magento\Framework\App\CacheInterface;
+use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\Catalog\Model\Product\Attribute\Backend\Media\ImageEntryConverter;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
@@ -372,6 +373,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         eavConfig $eavConfig,
         typeListInterface $typeListInterface,
         CacheInterface $cacheInterface,
+        FullPageCache $fullPageCache,
         countryOfManufacture $countryOfManufacture,
         layoutSource $layoutSource,
         stockRegistryInterface $stockRegistryInterface,
@@ -409,6 +411,7 @@ class Synccatalog extends \Magento\Framework\Model\AbstractModel
         $this->eavConfig                                = $eavConfig;
         $this->typeListInterface                        = $typeListInterface;
         $this->cacheInterface                           = $cacheInterface;
+        $this->fullPageCache                            = $fullPageCache;
         $this->countryOfManufacture                     = $countryOfManufacture;
         $this->layoutSource                             = $layoutSource;
         $this->stockRegistryInterface                   = $stockRegistryInterface;
