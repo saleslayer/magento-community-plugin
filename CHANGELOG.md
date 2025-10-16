@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.7.5] - 2025-10-16
+
+### Changed
+
+- Compatibility with MG version 2.4.8-p2 and PHP 8.4.
+- Clear cache for modified items only.
+
+### Tested
+
+- Tested on Magento 2.4.8-p2 / PHP 8.4.13
+
+
 ## [2.7.4] - 2025-06-24
 
 ### Changed
