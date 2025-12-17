@@ -73,26 +73,19 @@ class slConnection extends \Magento\Framework\App\Helper\AbstractHelper
         
         $this->loadConnection();
 
+        $table_prefix = $this->getTablePrefix();
         $table_name_return = $this->connection->getTableName($table_name);
 
+        if ($table_prefix && strpos($table_name_return, $table_prefix) !== 0) {
+            $table_name_return = $table_prefix . $table_name_return;
+        }
+
         if ($this->connection->isTableExists($table_name_return)) {
-
-            $table_prefix = $this->getTablePrefix();
-
-            if ($table_prefix && strpos($table_name_return, $table_prefix) !== 0) {
-
-                $table_name_return = $table_prefix . $table_name_return;
-
-            }
-
             return $table_name_return;
-
         }
 
         if (!in_array($table_name, $this->mg_tables_23)) {
-
             $this->slDebuger->debug('## Error. The table '.$table_name.' does not exist.');
-
         }
 
         return null;
