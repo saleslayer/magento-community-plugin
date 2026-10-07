@@ -124,12 +124,12 @@ php bin/magento cache:clean
 > See also [Magento system requirements][magento-system-requirements] for the right environment choice.
 
 [Magento Community]: https://business.adobe.com/products/magento/community.html
-[website]: https://support.saleslayer.com/category/magento
+[website]: https://support.saleslayer.com/en/support/solutions/folders/206000100927
 [Changelog]: ./CHANGELOG.md
 [Composer]: https://getcomposer.org/
 [changelog-2.5.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.5.x/CHANGELOG.md
 [changelog-2.6.x]: https://github.com/saleslayer/magento-community-plugin/blob/2.6.x/CHANGELOG.md
-[important notes]: https://support.saleslayer.com/magento/important-notes-about-magento-connector
+[important notes]: https://support.saleslayer.com/en/support/solutions/folders/206000103008
 [magento-system-requirements]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 [magento-install-extensions]: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/tutorials/extensions.html?lang=en
 [2.5.x]:https://github.com/saleslayer/magento-community-plugin/tree/2.5.x
